@@ -2,7 +2,7 @@
 // day+time / IN SIGHT (top-right), police response (mid-left), round minimap + district
 // (bottom-left), health/armour/REP (bottom-left), character dialogue with portrait
 // (bottom-centre), speedometer + car name + condition + radio + gear (bottom-right).
-import { HALF, ROAD_CENTERS, districtAt } from './config.js';
+import { HALF, ROAD_CENTERS, districtAt, MISSION_REWARDS } from './config.js';
 import { SPEAKERS } from './missions.js';
 import { weaponHud } from './weapons.js';
 import { unitList } from './wanted.js';
@@ -37,12 +37,14 @@ export function updateHud(game) {
     mt.querySelector('.mobj').textContent = `STAGE ${ms.stage + 1}/${m.stages.length} — ${st.text}`;
     mt.querySelector('.mnext').textContent = next ? `NEXT: ${next.name}` : 'NEXT: — final job —';
     mt.querySelector('.mtimer').textContent = ms.timer > 0 ? `⏱ ${Math.ceil(ms.timer)}s` : '';
+    mt.querySelector('.mreward').textContent = `REWARD $${MISSION_REWARDS[ms.active].toLocaleString('en-US')}`;
   } else {
     const nextId = game.nextMissionId();
     mt.querySelector('.mtitle').textContent = nextId >= 0 ? `MISSION ${nextId + 1}/7 READY` : 'ALL 7 MISSIONS DONE';
     mt.querySelector('.mobj').textContent = nextId >= 0 ? game.missionDefs[nextId].name : 'Free roam — Azura Bay is yours.';
     mt.querySelector('.mnext').textContent = nextId >= 0 ? 'Press M to start' : '';
     mt.querySelector('.mtimer').textContent = '';
+    mt.querySelector('.mreward').textContent = nextId >= 0 ? `REWARD $${MISSION_REWARDS[nextId].toLocaleString('en-US')}` : '';
   }
   // Top-right.
   $('money').textContent = `$${p.money.toLocaleString('en-US')}`;
@@ -134,8 +136,12 @@ function drawMinimap(game) {
     const [x4, y4] = toMap(HALF, r);
     mapCtx.beginPath(); mapCtx.moveTo(x3, y3); mapCtx.lineTo(x4, y4); mapCtx.stroke();
   }
-  mapCtx.fillStyle = '#2f7fc9';
-  mapCtx.fillRect(0, H - 8, W, 8);
+  // Coastline: the beach and sea sit south of the grid (negative Z), which maps
+  // to the top of the minimap — sand band, then blue sea at the very top edge.
+  mapCtx.fillStyle = '#f2e2b8';
+  mapCtx.fillRect(0, 7, W, 4);
+  mapCtx.fillStyle = '#1f9fd6';
+  mapCtx.fillRect(0, 0, W, 7);
   const dot = (x, z, color, r) => {
     const [mx, my] = toMap(x, z);
     mapCtx.fillStyle = color;

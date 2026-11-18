@@ -10,7 +10,7 @@ A complete sun-soaked 3D open-world crime game, built for make.fun's **"Make GTA
 
 ## The city
 
-Azura Bay is a sunny coastal city: a 5×5 block grid of procedural buildings with lit windows, palm trees, neon signs (HOTEL, BAR, CASINO, PIER, TACOS, CLUB), a beach and the sea to the south, and seven named districts — Old Port, Docklands, Marina Walk, Palm Heights, Neon Mile, Coral Row, Sunset Quay.
+Azura Bay is a sunny coastal city: a 5×5 block grid of procedural buildings with lit windows and brightly coloured facades (pink, orange, teal, yellow), palm trees, neon signs (HOTEL, BAR, CASINO, PIER, TACOS, CLUB, SUNSET, PIER 9, WAVES), a palm-lined beach, a wooden pier and the sea to the south, and seven named districts — Old Port, Docklands, Marina Walk, Palm Heights, Neon Mile, Coral Row, Sunset Quay. Jax starts with $1,500 and every mission pays a cash reward.
 
 ## What is in the game
 

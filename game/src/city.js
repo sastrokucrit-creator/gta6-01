@@ -7,6 +7,8 @@ import { BLOCK, GRID, HALF, PITCH, ROAD, ROAD_CENTERS } from './config.js';
 import { pick, range, rangeInt } from './rng.js';
 
 const WALL_COLORS = [0xe8dcc8, 0xd9c4a5, 0xc9b8a3, 0xb8c4c9, 0xe0b48f, 0xf2e3c6, 0xc7d3c0, 0xdba58a];
+// Bright sun-soaked facades: pink, orange, teal, yellow, coral, sky, purple.
+const BRIGHT_COLORS = [0xff7bac, 0xff8a3d, 0x2fb8a6, 0xffd23e, 0xff6b5e, 0x7dd3fc, 0xc084fc];
 const ROOF_COLORS = [0x8a5a3b, 0x5a6b7a, 0x7a4a3a, 0x4a5a6b, 0x9a7a4a];
 const TREE_COLORS = [0x2f8f4e, 0x3aa655, 0x2a7a44];
 
@@ -74,6 +76,40 @@ function makeTree(rng) {
   return g;
 }
 
+// A real palm: tall leaning trunk, a ring of long drooping fronds, coconuts.
+function makePalm(rng) {
+  const g = new THREE.Group();
+  const lean = range(rng, -0.12, 0.12);
+  const trunkMat = new THREE.MeshLambertMaterial({ color: 0x8a6a45 });
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.3, 5.2, 7), trunkMat);
+  trunk.position.set(0, 2.6, 0); trunk.rotation.z = lean; trunk.castShadow = true;
+  g.add(trunk);
+  const topX = -Math.sin(lean) * 5.2, topY = 5.2 * Math.cos(lean);
+  const frondMat = new THREE.MeshLambertMaterial({ color: pick(rng, [0x2fae5f, 0x37b24d, 0x27a35c]) });
+  const nFronds = 7;
+  for (let i = 0; i < nFronds; i++) {
+    const a = (i / nFronds) * Math.PI * 2 + range(rng, -0.2, 0.2);
+    // Pivot rotated around Y so the frond points radially outward; the frond
+    // itself is tilted down (droop) around the pivot's local X.
+    const pivot = new THREE.Group();
+    pivot.position.set(topX, topY - 0.1, 0);
+    pivot.rotation.y = a;
+    const frond = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.06, 2.6), frondMat);
+    frond.position.set(0, -0.15, 1.15);
+    frond.rotation.x = 0.55; // far end droops toward the ground
+    frond.castShadow = true;
+    pivot.add(frond);
+    g.add(pivot);
+  }
+  const nutMat = new THREE.MeshLambertMaterial({ color: 0x6b4a2a });
+  for (let i = 0; i < 3; i++) {
+    const nut = new THREE.Mesh(new THREE.SphereGeometry(0.22, 6, 5), nutMat);
+    nut.position.set(topX + range(rng, -0.3, 0.3), topY - 0.45, range(rng, -0.3, 0.3));
+    g.add(nut);
+  }
+  return g;
+}
+
 function makeLamp() {
   const g = new THREE.Group();
   const pole = new THREE.Mesh(
@@ -93,8 +129,10 @@ function makeLamp() {
 export function buildCity(scene, rng) {
   const aabbs = [];
   const textures = [];
-  for (let i = 0; i < 5; i++) {
-    const hex = '#' + new THREE.Color(pick(rng, WALL_COLORS)).getHexString();
+  // Mix of muted and bright sun-soaked facades (about half the buildings pop).
+  for (let i = 0; i < 7; i++) {
+    const pal = i < 4 ? WALL_COLORS : BRIGHT_COLORS;
+    const hex = '#' + new THREE.Color(pick(rng, pal)).getHexString();
     textures.push(windowTexture(rng, hex, 0.25));
   }
 
@@ -113,10 +151,44 @@ export function buildCity(scene, rng) {
   scene.add(beach);
   const sea = new THREE.Mesh(
     new THREE.PlaneGeometry(HALF * 2 + 260, 160),
-    new THREE.MeshLambertMaterial({ color: 0x2f7fc9 }),
+    new THREE.MeshLambertMaterial({ color: 0x1f9fd6 }),
   );
   sea.rotation.x = -Math.PI / 2; sea.position.set(0, -0.2, -HALF - 26 - 80); sea.receiveShadow = true;
   scene.add(sea);
+  // White foam where the waves meet the sand, plus a second foam line further out.
+  const foamMat = new THREE.MeshLambertMaterial({ color: 0xeaf7ff });
+  for (const fz of [-152, -168]) {
+    const foam = new THREE.Mesh(new THREE.PlaneGeometry(HALF * 2 + 260, 1.6), foamMat);
+    foam.rotation.x = -Math.PI / 2; foam.position.set(0, -0.1, fz);
+    scene.add(foam);
+  }
+  // Palm-lined beach: a row of palms along the sand, and a wooden pier at x=-78
+  // reaching into the sea (the beach road's landmark, right ahead in the dusk shot).
+  for (let x = -120; x <= 120; x += 11) {
+    const palm = makePalm(rng);
+    palm.position.set(x + range(rng, -3, 3), 0, -133 + range(rng, -4, 4));
+    palm.rotation.y = rng() * Math.PI * 2;
+    scene.add(palm);
+  }
+  {
+    const pierMat = new THREE.MeshLambertMaterial({ color: 0x8a6a45 });
+    const pier = new THREE.Group();
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(6, 0.5, 34), pierMat);
+    deck.position.set(0, 0.6, 0); deck.castShadow = true; deck.receiveShadow = true;
+    pier.add(deck);
+    for (let pz = -15; pz <= 15; pz += 6) {
+      for (const px of [-2.6, 2.6]) {
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 2.2, 6), pierMat);
+        post.position.set(px, -0.2, pz);
+        pier.add(post);
+      }
+    }
+    const pierEnd = new THREE.Mesh(new THREE.BoxGeometry(10, 0.5, 6), pierMat);
+    pierEnd.position.set(0, 0.6, -19); pierEnd.castShadow = true;
+    pier.add(pierEnd);
+    pier.position.set(-78, 0, -156);
+    scene.add(pier);
+  }
 
   // Roads: asphalt strips with pale sidewalks on each side, dashed centre lines.
   const asphalt = new THREE.MeshLambertMaterial({ color: 0x3a3f46 });
@@ -162,11 +234,17 @@ export function buildCity(scene, rng) {
       scene.add(b.group);
       aabbs.push(b.aabb);
     }
-    // Trees at block corners.
+    // Trees at block corners; palms in the beachfront (southern) row.
     for (let k = 0; k < 2; k++) {
       const t = makeTree(rng);
       t.position.set(bc.x + (rng() < 0.5 ? -14 : 14), 0, bc.z + (rng() < 0.5 ? -14 : 14));
       scene.add(t);
+    }
+    if (bc.z < -80) {
+      const palm = makePalm(rng);
+      palm.position.set(bc.x + (rng() < 0.5 ? -13 : 13), 0, bc.z + (rng() < 0.5 ? -13 : 13));
+      palm.rotation.y = rng() * Math.PI * 2;
+      scene.add(palm);
     }
   }
   // Lamps along roads.
@@ -185,9 +263,11 @@ export function buildCity(scene, rng) {
     { text: 'HOTEL', color: '#ff4fd8' }, { text: 'BAR', color: '#37e0ff' },
     { text: 'CASINO', color: '#ffd23e' }, { text: 'PIER', color: '#7dff9a' },
     { text: 'TACOS', color: '#ff8a3d' }, { text: 'CLUB', color: '#b06bff' },
+    { text: 'SUNSET', color: '#ff6b5e' }, { text: 'PIER 9', color: '#7dd3fc' },
+    { text: 'WAVES', color: '#2fb8a6' },
   ];
   const neonMeshes = [];
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 11; i++) {
     const bc = blockCenters[Math.floor(rng() * blockCenters.length)];
     const n = NEON[i % NEON.length];
     const c = document.createElement('canvas');
@@ -201,10 +281,10 @@ export function buildCity(scene, rng) {
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
     const sign = new THREE.Mesh(
-      new THREE.PlaneGeometry(9, 2.25),
+      new THREE.PlaneGeometry(12, 3),
       new THREE.MeshBasicMaterial({ map: tex, transparent: false }),
     );
-    sign.position.set(bc.x + range(rng, -10, 10), range(rng, 8, 16), bc.z + (rng() < 0.5 ? -19 : 19));
+    sign.position.set(bc.x + range(rng, -10, 10), range(rng, 10, 20), bc.z + (rng() < 0.5 ? -19 : 19));
     sign.rotation.y = sign.position.z > bc.z ? 0 : Math.PI;
     scene.add(sign);
     neonMeshes.push(sign);

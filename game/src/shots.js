@@ -48,7 +48,7 @@ export function stageShot(name, game) {
     g.missions.stage = 3; // escape stage, so the panel reads STAGE 4/4
     g.missions.dialog = { who: 'MARA', text: 'Lose that helicopter before you come near my garage!' };
     g.missions.dialogT = 99;
-    const car = driveCar(g, 18, -60, 0, 24);
+    const car = driveCar(g, 18, -48, 0, 24);
     if (car) car.name = 'Comet GT';
     g.spawnPoliceNear(3, 12);
     g.radio.station = 0;
@@ -76,14 +76,15 @@ export function stageShot(name, game) {
     return;
   }
   if (name === 'dusk') {
-    // Sunset: neon signs, orange sky, player driving the beach road, wanted 1.
+    // Sunset: neon signs, orange sky, player driving the beach road south toward
+    // the sea — palms, pier and sunset over the water ahead, wanted 1.
     g.setDusk(true);
     g.clockMinutes = 18 * 60 + 30; // 18:30 — the clock must match the sunset sky
     g.setWanted(1);
     g.radio.station = 3;
-    const car = driveCar(g, -78, -100, Math.PI / 2, 16);
+    const car = driveCar(g, -78, -70, Math.PI, 16);
     if (car) car.name = 'Palm Runner';
-    g.missions.dialog = { who: 'LENA', text: 'Azura Bay at sunset. Even the cops look good in this light.' };
+    g.missions.dialog = { who: 'LENA', text: 'Sunset on the beach road. Even the cops look good in this light.' };
     g.missions.dialogT = 99;
     simulate(g, SIM_SECONDS);
     if (car) car.speed = 16; // re-accelerate so the speedo reads like a drive, not a stall
@@ -94,12 +95,18 @@ export function stageShot(name, game) {
   g.teleportPlayer(18, 18, Math.PI);
   g.missions.dialog = { who: 'DEX', text: 'Nice day for a walk, Jax. The city is yours — if you can take it.' };
   g.missions.dialogT = 99;
-  // Pull three pedestrians onto the sidewalks ahead of the player so the shot shows
+  // Pull six pedestrians onto the sidewalks ahead of the player so the shot shows
   // foot traffic, not an empty street.
-  const pedSpots = [[10.5, 8], [25.5, 2], [10.5, -6]];
+  const pedSpots = [[10.5, 8], [25.5, 2], [10.5, -6], [25.5, 12], [14, -14], [28, -10]];
   pedSpots.forEach((s, i) => {
     const p = g.peds[i];
     if (p) { p.x = s[0]; p.z = s[1]; p.angle = Math.PI / 2; p.sync(); }
   });
+  // Two traffic cars on the player's road, driving toward the camera, so the
+  // street reads as alive.
+  const t0 = g.traffic[0];
+  if (t0) { t0.x = 18; t0.z = -24; t0.angle = 0; t0.speed = 9; t0.sync(); }
+  const t1 = g.traffic[1];
+  if (t1) { t1.x = 18; t1.z = -44; t1.angle = 0; t1.speed = 9; t1.sync(); }
   simulate(g, SIM_SECONDS);
 }

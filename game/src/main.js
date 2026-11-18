@@ -205,7 +205,7 @@ const game = {
   },
   reset() {
     player.x = 18; player.z = 18; player.y = 0; player.angle = 0;
-    player.health = 100; player.armour = 50; player.money = 0; player.rep = 0;
+    player.health = 100; player.armour = 50; player.money = 1500; player.rep = 0;
     player.inCar = null; player.mesh.visible = true;
     player.mesh.position.set(18, 0, 18);
     clearWanted(wanted, scene);
@@ -414,7 +414,7 @@ let screen = 'menu';
 let paused = false;
 
 function applySave(d) {
-  player.money = d.money ?? 0;
+  player.money = d.money ?? 1500;
   player.health = d.health ?? 100;
   player.armour = d.armour ?? 50;
   player.rep = d.rep ?? 0;
