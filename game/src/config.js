@@ -1,61 +1,69 @@
-// Every tuning number and colour in one place. The playfield is a fixed 1280x720 logical area;
-// the renderer scales it to the window, so no rule below depends on the screen size.
-
-export const FIELD = { width: 1280, height: 720, groundY: 664 };
-
-/** The simulation's fixed step, in seconds: 60 updates a second whatever the display's rate. */
+// Every tuning number and all the names in one place. Azura Bay is a sunny coastal city:
+// a grid of blocks separated by roads, sea and beach to the south, palms everywhere.
+// District names, car names, radio stations and crew names are all original.
 export const STEP = 1 / 60;
+export const BLOCK = 36;
+export const ROAD = 12;
+export const PITCH = BLOCK + ROAD; // 48
+export const GRID = 5;
+export const HALF = (GRID * PITCH + ROAD) / 2; // 126
+export const ROAD_CENTERS = [-126, -78, -30, 18, 66, 114];
+export const SAVE_KEY = 'azura-bay-save-v1';
+export const CITY_NAME = 'Azura Bay';
 
 export const PLAYER = {
-  width: 72,
-  height: 24,
-  speed: 560,
-  invulnerable: 1.5,
+  walkSpeed: 6, runSpeed: 10, jumpSpeed: 8.5, radius: 0.55, height: 1.8,
 };
-
-export const LIVES = 3;
-
-export const BLOCK = {
-  minWidth: 40,
-  maxWidth: 110,
-  height: 36,
-  speed: 240,
-  speedPerLevel: 30,
-  speedJitter: 90,
-  interval: 0.55,
-  intervalScale: 0.88,
-  minInterval: 0.14,
-  dodgePoints: 1,
+export const CAR = {
+  accel: 22, brake: 34, maxSpeed: 34, maxReverse: 10, steer: 1.9, grip: 8,
 };
+export const WANTED_MAX = 5;
 
-export const COIN = {
-  size: 24,
-  speed: 190,
-  speedPerLevel: 14,
-  interval: 1.4,
-  intervalJitter: 0.8,
-  points: 10,
-};
+// Districts: 3x3 zones across the city (south row is the beachfront).
+export const DISTRICTS = [
+  ['OLD PORT', 'DOCKLANDS', 'MARINA WALK'],
+  ['PALM HEIGHTS', 'NEON MILE', 'CORAL ROW'],
+  ['SUNSET QUAY', 'PALM HEIGHTS', 'NEON MILE'],
+];
+export function districtAt(x, z) {
+  const col = Math.max(0, Math.min(2, Math.floor((x + HALF) / (HALF * 2 / 3))));
+  const row = Math.max(0, Math.min(2, Math.floor((z + HALF) / (HALF * 2 / 3))));
+  return DISTRICTS[row][col];
+}
 
-/** Seconds of play per level, and the last level: speeds and spawn rates stop growing there. */
-export const LEVEL = { seconds: 12, max: 12 };
+// Original car model names (one per traffic colour slot, plus the taxi).
+export const CAR_NAMES = ['Comet GT', 'Coast Cruiser', 'Dune Runner', 'Street Hawk', 'Vulture', 'Palm Runner', 'Bay Breeze', 'Night Fox', 'Turbo Ray'];
+export const TAXI_NAME = 'Azura Cab';
 
-/** How many falling things can exist at once; the pool is allocated once, at boot. */
-export const POOL_SIZE = 64;
+// Radio stations (original names + song titles), switched with R in a car.
+export const RADIO = [
+  { freq: '88.1', name: 'WAVE 88.1', songs: ['Neon Drive — Palm Static', 'Midnight Palm — The Coasters', 'Salt Air — Marina Blue'] },
+  { freq: '94.5', name: 'PALM FM 94.5', songs: ['Turbo Heart — Velo City', 'Sunset Quay — Coral Kings', 'Boardwalk Nights — The Tides'] },
+  { freq: '101.2', name: 'BAY ROCK 101.2', songs: ['Engine Roar — Iron Palms', 'Highway Heat — Dust Devils', 'Chrome Hearts — The Rivieras'] },
+  { freq: '107.7', name: 'TROPICANA 107.7', songs: ['Isla Breeze — Coco Loco', 'Mango Sky — Sol Band', 'Fiesta Bay — Los Palmeros'] },
+];
 
-export const PALETTE = {
-  backdrop: '#11141b',
-  sky: '#1b1f2a',
-  ground: '#2a3040',
-  player: '#4fc3f7',
-  block: '#e5534b',
-  coin: '#f2c94c',
-  panel: '#252b38',
-  text: '#eef1f5',
-  muted: '#8b93a3',
-};
+// Weapons: 4 slots. SMG unlocks after mission 2, shotgun after mission 4.
+export const WEAPONS = [
+  { key: '1', name: 'FISTS', ammo: Infinity, damage: 0, rate: 0.45, range: 2.2, locked: false },
+  { key: '2', name: 'PISTOL', ammo: 60, damage: 34, rate: 0.32, range: 60, locked: false },
+  { key: '3', name: 'SMG', ammo: 120, damage: 18, rate: 0.11, range: 45, locked: true, unlockMission: 2 },
+  { key: '4', name: 'SHOTGUN', ammo: 24, damage: 80, rate: 0.9, range: 22, locked: true, unlockMission: 4 },
+];
 
-export const FONT = 'system-ui, -apple-system, "Segoe UI", sans-serif';
+// REP ranks: XP from missions, escapes and steals.
+export const REP_RANKS = [
+  { xp: 0, title: 'STREET RAT' },
+  { xp: 400, title: 'CORNER KID' },
+  { xp: 1000, title: 'BAY HUSTLER' },
+  { xp: 1800, title: 'WHEELMAN' },
+  { xp: 2800, title: 'AZURA LEGEND' },
+];
+export function repRank(xp) {
+  let r = 0;
+  for (let i = 0; i < REP_RANKS.length; i++) if (xp >= REP_RANKS[i].xp) r = i;
+  const next = REP_RANKS[r + 1];
+  return { level: r + 1, title: REP_RANKS[r].title, cur: xp - REP_RANKS[r].xp, need: next ? next.xp - REP_RANKS[r].xp : 0, maxed: !next };
+}
 
-/** Where the best score is kept between visits (this browser only). */
-export const BEST_KEY = 'block-dodger.best';
+export const MISSION_REWARDS = [250, 400, 350, 500, 600, 700, 1500];

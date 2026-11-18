@@ -3,16 +3,123 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Block Dodger</title>
+<title>Azura Bay — Open World Crime</title>
 <style>
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #11141b; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #87b5d6; font-family: Arial, Helvetica, sans-serif; }
   #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
-  /* Read aloud, never shown: the status line screen readers announce. */
+  #hud { position: fixed; inset: 0; pointer-events: none; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.85); display: none; font-size: 14px; }
+  #hud.on { display: block; }
+  .panel { background: rgba(0,0,0,.5); border-radius: 8px; padding: 7px 10px; }
+  /* Top-left: mission panel */
+  #mission { position: absolute; top: 12px; left: 12px; width: 300px; line-height: 1.45; }
+  #mission .mtitle { font-size: 17px; font-weight: bold; color: #ffd23e; }
+  #mission .mobj { font-size: 13px; }
+  #mission .mnext { font-size: 12px; color: #9fd8ff; }
+  #mission .mtimer { font-size: 15px; font-weight: bold; color: #ff8a7a; }
+  /* Top-right: money, wanted, weapons, clock, sight */
+  #topright { position: absolute; top: 12px; right: 12px; text-align: right; }
+  #money { font-size: 24px; font-weight: bold; color: #7dff9a; }
+  #wanted { font-size: 28px; letter-spacing: 4px; color: #ffd23e; line-height: 1.1; }
+  #wanted .off { color: rgba(255,255,255,.25); }
+  #weapons { margin-top: 4px; font-size: 13px; }
+  #weapons span { display: inline-block; background: rgba(0,0,0,.55); border: 1px solid #888; border-radius: 5px; padding: 2px 7px; margin-left: 4px; }
+  #weapons span.sel { border-color: #ffd23e; color: #ffd23e; }
+  #weapons span.locked { opacity: .45; }
+  #clock { margin-top: 4px; font-size: 15px; font-weight: bold; }
+  #sight { margin-top: 2px; font-size: 13px; font-weight: bold; }
+  #sight.seen { color: #ff5a4e; }
+  #sight.hidden { color: #7dff9a; }
+  /* Mid-left: police response */
+  #police { position: absolute; top: 240px; left: 12px; width: 250px; line-height: 1.5; display: none; }
+  #police .ptitle { font-size: 14px; font-weight: bold; color: #7fb8ff; letter-spacing: 1px; }
+  #police .unit { font-size: 13px; }
+  #police .unit b { color: #ffd23e; }
+  /* Bottom-left: minimap + district + vitals + REP */
+  #mapwrap { position: absolute; bottom: 12px; left: 12px; }
+  #minimap { border: 2px solid rgba(255,255,255,.9); border-radius: 50%; background: #1c2733; box-shadow: 0 2px 10px rgba(0,0,0,.5); display: block; }
+  #district { text-align: center; font-size: 14px; font-weight: bold; margin-top: 4px; color: #ffe27a; }
+  #vitals { position: absolute; bottom: 12px; left: 200px; width: 200px; line-height: 1.5; }
+  .bar { height: 10px; background: rgba(0,0,0,.65); border: 1px solid #fff; border-radius: 5px; overflow: hidden; margin: 2px 0 4px; }
+  .bar > div { height: 100%; }
+  #healthfill { background: linear-gradient(90deg,#37d67a,#a5e34a); width: 100%; }
+  #armourfill { background: linear-gradient(90deg,#4aa3ff,#9fd8ff); width: 50%; }
+  #rep { font-size: 13px; font-weight: bold; color: #ffd23e; }
+  #repbar { height: 8px; }
+  #repbar > div { background: #ffd23e; width: 0%; }
+  /* Bottom-center: character dialogue with portrait */
+  #dialog { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); width: 460px; display: none; }
+  #dialog .inner { display: flex; gap: 10px; align-items: center; }
+  #portrait { width: 56px; height: 56px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; color: #fff; border: 2px solid #fff; }
+  #dialog .dname { font-size: 14px; font-weight: bold; color: #ffd23e; }
+  #dialog .dtext { font-size: 15px; line-height: 1.35; }
+  /* Bottom-right: speedometer + car + radio */
+  #drive { position: absolute; bottom: 12px; right: 12px; text-align: right; }
+  #speedo { font-size: 40px; font-weight: bold; line-height: 1; }
+  #speedo small { font-size: 15px; }
+  #carname { font-size: 15px; font-weight: bold; color: #ffe27a; }
+  #condbar { width: 170px; height: 9px; background: rgba(0,0,0,.65); border: 1px solid #fff; border-radius: 5px; overflow: hidden; margin: 3px 0 3px auto; }
+  #condfill { height: 100%; background: #37d67a; width: 100%; }
+  #radio { font-size: 13px; color: #9fd8ff; }
+  #gear { font-size: 13px; }
+  #crosshair { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); font-size: 22px; display: none; }
+  #toast { position: absolute; top: 100px; left: 50%; transform: translateX(-50%); font-size: 18px; font-weight: bold; color: #ffe27a; display: none; text-align: center; }
+  #hint { position: absolute; bottom: 210px; left: 12px; font-size: 12px; line-height: 1.5; opacity: .9; }
+  #menu { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; background: linear-gradient(180deg, rgba(10,30,60,.55), rgba(10,30,60,.88)); color: #fff; text-align: center; z-index: 5; }
+  #menu h1 { font-size: 68px; margin: 0; letter-spacing: 3px; color: #ffd23e; text-shadow: 0 4px 0 #b3541e, 0 8px 24px rgba(0,0,0,.6); font-style: italic; }
+  #menu h2 { font-size: 20px; margin: 6px 0 18px; font-weight: normal; letter-spacing: 6px; }
+  #menu p.story { max-width: 580px; font-size: 16px; line-height: 1.5; margin: 0 0 22px; }
+  #menu button { pointer-events: auto; font-size: 20px; padding: 12px 34px; margin: 6px; border: 0; border-radius: 8px; background: #ffd23e; color: #222; font-weight: bold; cursor: pointer; }
+  #menu button.secondary { background: #fff; }
+  #menu .controls { font-size: 13px; line-height: 1.7; opacity: .9; margin-top: 18px; }
+  #pause { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; flex-direction: column; background: rgba(0,0,0,.6); color: #fff; z-index: 6; }
+  #pause h1 { font-size: 44px; margin: 0 0 14px; }
+  #pause button { font-size: 18px; padding: 10px 28px; margin: 6px; border: 0; border-radius: 8px; background: #ffd23e; color: #222; font-weight: bold; cursor: pointer; }
   #status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 </style>
 </head>
 <body>
-<canvas id="game" aria-label="Block Dodger: move the paddle left and right to dodge falling blocks and catch coins"></canvas>
+<canvas id="game" aria-label="Azura Bay: an open-world crime game. Walk, drive, steal cars, escape the police and finish missions."></canvas>
+<div id="hud">
+  <div id="mission" class="panel"><div class="mtitle">NO MISSION</div><div class="mobj">Press M to start the next job</div><div class="mnext"></div><div class="mtimer"></div></div>
+  <div id="topright">
+    <div id="money" class="panel">$0</div>
+    <div id="wanted"><span class="off">★</span><span class="off">★</span><span class="off">★</span><span class="off">★</span><span class="off">★</span></div>
+    <div id="weapons"></div>
+    <div id="clock" class="panel">DAY 1 · 09:00</div>
+    <div id="sight" class="hidden">HIDDEN</div>
+  </div>
+  <div id="police" class="panel"><div class="ptitle">POLICE RESPONSE</div><div id="units"></div></div>
+  <div id="mapwrap"><canvas id="minimap" width="170" height="170"></canvas><div id="district">NEON MILE</div></div>
+  <div id="vitals" class="panel">
+    <div>HEALTH <span id="hptext">100</span></div><div class="bar"><div id="healthfill"></div></div>
+    <div>ARMOUR <span id="armtext">50</span></div><div class="bar"><div id="armourfill"></div></div>
+    <div id="rep">REP 1 · STREET RAT</div><div class="bar" id="repbar"><div></div></div>
+  </div>
+  <div id="dialog" class="panel"><div class="inner"><div id="portrait">M</div><div><div class="dname">MARA</div><div class="dtext"></div></div></div></div>
+  <div id="drive">
+    <div id="speedo" style="display:none">0 <small>km/h</small></div>
+    <div id="carname"></div>
+    <div id="condbar" style="display:none"><div id="condfill"></div></div>
+    <div id="radio"></div>
+    <div id="gear"></div>
+  </div>
+  <div id="crosshair">＋</div>
+  <div id="toast"></div>
+  <div id="hint">WASD move · SHIFT run · SPACE jump · E enter/steal car · F punch · CLICK shoot · 1-4 weapons · R radio · M mission · P pause · drag mouse to look</div>
+</div>
+<div id="menu">
+  <h1>AZURA BAY</h1>
+  <h2>OPEN WORLD CRIME</h2>
+  <p class="story">Sun, sea and stolen cars. Jax washed up in Azura Bay with empty pockets and a
+  reputation to rebuild. Mara, the fixer who runs the docks, has work for anyone fast enough —
+  if the police don't catch you first. Seven jobs. One crew. No way back.</p>
+  <button id="btnStart">START</button>
+  <button id="btnContinue" class="secondary" style="display:none">CONTINUE</button>
+  <div class="controls">WASD move · SHIFT run · SPACE jump · E enter / steal car · F punch · CLICK shoot<br>
+  1-4 weapons · R radio · Drive: W accelerate · S brake / reverse · A/D steer · SPACE handbrake · E exit<br>
+  M mission · P pause · progress saves automatically · garage repairs your car</div>
+</div>
+<div id="pause"><h1>PAUSED</h1><button id="btnResume">RESUME</button><button id="btnQuit">QUIT TO TITLE</button></div>
 <p id="status" role="status" aria-live="polite"></p>
 <script type="module" src="./src/main.js"></script>
 </body>
