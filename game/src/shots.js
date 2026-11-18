@@ -40,8 +40,16 @@ function policeBehind(game, dist) {
 export function stageShot(name, game) {
   game.reset();
   const g = game;
+  // Mid-game staging: the shots show a player who has already earned their
+  // keep — several jobs done, a fat wallet, a REP rank to match — so the HUD
+  // reads like a career in progress, not a fresh start.
+  g.player.money = 12400;
+  g.player.rep = 1200;
   if (name === 'chase') {
-    // Cover: high-speed chase, wanted 4, police + helicopter + roadblock, full HUD.
+    // Cover: high-speed chase at golden hour, wanted 4, police + helicopter +
+    // roadblock, full HUD. The low amber sun and warm haze do the cinematic work.
+    g.setDusk(true);
+    g.clockMinutes = 18 * 60 + 32; // 18:32 — the clock must match the sunset sky
     g.setWanted(4);
     g.setHeli(true);
     g.startMission(6);
@@ -51,12 +59,39 @@ export function stageShot(name, game) {
     const car = driveCar(g, 18, -48, 0, 24);
     if (car) car.name = 'Comet GT';
     g.spawnPoliceNear(3, 12);
+    // Busy street: pedestrians on both sidewalks and traffic in both lanes,
+    // offset so the chase car threads between them instead of piling into them.
+    const chasePeds = [[10.5, -30], [25.5, -20], [10.5, -5], [25.5, 10]];
+    chasePeds.forEach((s, i) => {
+      const p = g.peds[6 + i];
+      if (p) { p.x = s[0]; p.z = s[1]; p.angle = Math.PI / 2; p.sync(); }
+    });
+    const ct0 = g.traffic[2];
+    if (ct0) { ct0.x = 22; ct0.z = -30; ct0.angle = 0; ct0.speed = 10; ct0.sync(); }
+    const ct1 = g.traffic[3];
+    if (ct1) { ct1.x = 22; ct1.z = -10; ct1.angle = 0; ct1.speed = 10; ct1.sync(); }
+    const ct2 = g.traffic[4];
+    if (ct2) { ct2.x = 14; ct2.z = 30; ct2.angle = Math.PI; ct2.speed = 9; ct2.sync(); }
     g.radio.station = 0;
     simulate(g, SIM_SECONDS);
     // Re-accelerate for the frame so the speedo reads like a chase, and put one
     // police car ahead of the player so its light bar is visible on screen.
     if (car) { car.speed = 26; g.spawnPoliceAhead(30); }
     g.snapHeli(); // the heli's lerp lags a moving target — snap it into frame
+    // Bigger, closer chopper for the cover: pull it in from 36m to ~24m ahead,
+    // lower, and scale it up so the spotlight reads.
+    {
+      const p = g.player.inCar || g.player;
+      const fx = Math.sin(p.angle), fz = Math.cos(p.angle);
+      g.heli.x = p.x + fx * 24;
+      g.heli.z = p.z + fz * 24;
+      g.heli.y = 6.5;
+      g.heli.mesh.position.set(g.heli.x, g.heli.y, g.heli.z);
+      g.heli.mesh.scale.set(2.0, 2.0, 2.0);
+      const ud = g.heli.mesh.userData;
+      ud.spotTarget.position.set(p.x - g.heli.x, -g.heli.y, p.z - g.heli.z);
+      ud.pool.position.set(p.x - g.heli.x, -g.heli.y + 0.3, p.z - g.heli.z);
+    }
     return;
   }
   if (name === 'mission') {
@@ -71,6 +106,16 @@ export function stageShot(name, game) {
     g.missions.dialogT = 99;
     const car = driveCar(g, 60, 66, Math.PI / 2, 14);
     if (car) car.name = 'Coast Cruiser';
+    // Busy street: pedestrians on the sidewalks and traffic in both lanes.
+    const missionPeds = [[80, 58.5], [95, 73.5], [70, 73.5], [105, 58.5]];
+    missionPeds.forEach((s, i) => {
+      const p = g.peds[6 + i];
+      if (p) { p.x = s[0]; p.z = s[1]; p.angle = Math.PI / 2; p.sync(); }
+    });
+    const mt0 = g.traffic[2];
+    if (mt0) { mt0.x = 90; mt0.z = 70; mt0.angle = Math.PI / 2; mt0.speed = 10; mt0.sync(); }
+    const mt1 = g.traffic[3];
+    if (mt1) { mt1.x = 110; mt1.z = 62; mt1.angle = -Math.PI / 2; mt1.speed = 9; mt1.sync(); }
     simulate(g, 1.0);
     if (car) car.speed = 14; // re-accelerate so the speedo reads like a drive, not a stall
     return;

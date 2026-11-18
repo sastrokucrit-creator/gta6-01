@@ -126,6 +126,89 @@ function makeLamp() {
   return g;
 }
 
+// A striped beach umbrella: pole + wide cone canopy in a bright colour.
+function makeUmbrella(rng) {
+  const g = new THREE.Group();
+  const pole = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.07, 0.07, 2.6, 6),
+    new THREE.MeshLambertMaterial({ color: 0xf2f2f2 }),
+  );
+  pole.position.y = 1.3;
+  const canopy = new THREE.Mesh(
+    new THREE.ConeGeometry(2.2, 1.0, 8),
+    new THREE.MeshLambertMaterial({ color: pick(rng, [0xff7bac, 0xffd23e, 0x2fb8a6, 0xff8a3d, 0x7dd3fc]) }),
+  );
+  canopy.position.y = 2.9; canopy.castShadow = true;
+  g.add(pole); g.add(canopy);
+  return g;
+}
+
+// A wooden bench facing the sea.
+function makeBench() {
+  const g = new THREE.Group();
+  const wood = new THREE.MeshLambertMaterial({ color: 0x8a6a45 });
+  const seat = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.18, 0.7), wood);
+  seat.position.y = 0.55; seat.castShadow = true;
+  const back = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.8, 0.14), wood);
+  back.position.set(0, 1.0, 0.32); back.castShadow = true;
+  g.add(seat); g.add(back);
+  for (const x of [-1.0, 1.0]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.55, 0.6), wood);
+    leg.position.set(x, 0.28, 0);
+    g.add(leg);
+  }
+  return g;
+}
+
+// A big ferris wheel on the water's edge — the beach's landmark, a silhouette
+// against the sunset. Returns the rotating wheel group.
+function makeFerrisWheel() {
+  const g = new THREE.Group();
+  const frameMat = new THREE.MeshLambertMaterial({ color: 0xf2f2f2 });
+  const darkMat = new THREE.MeshLambertMaterial({ color: 0x333a42 });
+  // Platform deck on posts, out over the water.
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(14, 0.6, 10), new THREE.MeshLambertMaterial({ color: 0x8a6a45 }));
+  deck.position.y = 0.4; deck.castShadow = true; deck.receiveShadow = true;
+  g.add(deck);
+  for (const px of [-5, 5]) for (const pz of [-3.5, 3.5]) {
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 2.4, 6), darkMat);
+    post.position.set(px, -0.6, pz);
+    g.add(post);
+  }
+  // A-frame legs up to the axle.
+  for (const s of [-1, 1]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.7, 26, 0.7), frameMat);
+    leg.position.set(s * 4.5, 12, 0);
+    leg.rotation.z = -s * 0.18;
+    leg.castShadow = true;
+    g.add(leg);
+  }
+  // The wheel itself: rim, spokes, bright gondolas. Rotates around Z.
+  const wheel = new THREE.Group();
+  wheel.position.set(0, 22, 0);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(18, 0.55, 8, 40), frameMat);
+  rim.castShadow = true;
+  wheel.add(rim);
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.4, 18, 0.4), darkMat);
+    spoke.position.set(Math.sin(a) * 9, Math.cos(a) * 9, 0);
+    spoke.rotation.z = -a;
+    wheel.add(spoke);
+    const cab = new THREE.Mesh(
+      new THREE.BoxGeometry(2.2, 1.8, 1.8),
+      new THREE.MeshLambertMaterial({ color: [0xff7bac, 0xffd23e, 0x2fb8a6, 0xff8a3d][i % 4] }),
+    );
+    cab.position.set(Math.sin(a) * 18, Math.cos(a) * 18, 0);
+    cab.castShadow = true;
+    wheel.add(cab);
+  }
+  const hub = new THREE.Mesh(new THREE.SphereGeometry(1.2, 10, 8), new THREE.MeshLambertMaterial({ color: 0xffd23e }));
+  wheel.add(hub);
+  g.add(wheel);
+  return { group: g, wheel };
+}
+
 export function buildCity(scene, rng) {
   const aabbs = [];
   const textures = [];
@@ -189,6 +272,23 @@ export function buildCity(scene, rng) {
     pier.position.set(-78, 0, -156);
     scene.add(pier);
   }
+  // Beach resort props: striped umbrellas and benches facing the sea along the sand.
+  for (let x = -118; x <= 118; x += 22) {
+    const umb = makeUmbrella(rng);
+    umb.position.set(x + range(rng, -3, 3), 0, -138 + range(rng, -3, 3));
+    umb.rotation.y = rng() * Math.PI * 2;
+    scene.add(umb);
+  }
+  for (let x = -108; x <= 108; x += 36) {
+    const bench = makeBench();
+    bench.position.set(x, 0, -133);
+    bench.rotation.y = Math.PI; // face the sea
+    scene.add(bench);
+  }
+  // Ferris wheel on the water's edge, east of the pier — the beach's landmark.
+  const ferris = makeFerrisWheel();
+  ferris.group.position.set(-30, 0, -185);
+  scene.add(ferris.group);
 
   // Roads: asphalt strips with pale sidewalks on each side, dashed centre lines.
   const asphalt = new THREE.MeshLambertMaterial({ color: 0x3a3f46 });
@@ -289,7 +389,7 @@ export function buildCity(scene, rng) {
     scene.add(sign);
     neonMeshes.push(sign);
   }
-  return { aabbs, blockCenters, neonMeshes };
+  return { aabbs, blockCenters, neonMeshes, ferris: ferris.wheel };
 }
 
 // Is (x,z) inside any building AABB (with a margin)?

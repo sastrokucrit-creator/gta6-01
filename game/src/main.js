@@ -52,6 +52,15 @@ sun.shadow.camera.left = -160; sun.shadow.camera.right = 160;
 sun.shadow.camera.top = 160; sun.shadow.camera.bottom = -160;
 sun.shadow.camera.far = 400;
 scene.add(sun);
+// Low golden sun disc + halo over the sea (visible only at dusk, low on the horizon).
+const sunDisc = new THREE.Mesh(new THREE.CircleGeometry(16, 32), new THREE.MeshBasicMaterial({ color: 0xffc46b, fog: false }));
+sunDisc.position.set(-60, 24, -280);
+sunDisc.visible = false;
+scene.add(sunDisc);
+const sunHalo = new THREE.Mesh(new THREE.CircleGeometry(30, 32), new THREE.MeshBasicMaterial({ color: 0xff9a3d, transparent: true, opacity: 0.28, fog: false, depthWrite: false }));
+sunHalo.position.set(-60, 24, -282);
+sunHalo.visible = false;
+scene.add(sunHalo);
 
 const city = buildCity(scene, rng);
 const player = createPlayer(scene, 18, 18);
@@ -188,19 +197,26 @@ const game = {
   setDusk(on) {
     game.dusk = on;
     if (on) {
-      scene.background = new THREE.Color(0x4a2a4a);
-      scene.fog.color.setHex(0x4a2a4a);
-      hemi.intensity = 0.35;
-      sun.color.setHex(0xff8a3d);
-      sun.intensity = 1.1;
-      sun.position.set(-120, 40, -80);
+      // Golden hour: warm mauve sky, low amber sun, long shadows, haze.
+      scene.background = new THREE.Color(0x6b3a44);
+      scene.fog.color.setHex(0x6b3a44);
+      scene.fog.near = 140; scene.fog.far = 380;
+      hemi.color.setHex(0xffd9a0); hemi.groundColor.setHex(0x6a4a3a);
+      hemi.intensity = 0.42;
+      sun.color.setHex(0xffb347);
+      sun.intensity = 1.6;
+      sun.position.set(-120, 26, -140);
+      sunDisc.visible = true; sunHalo.visible = true;
     } else {
       scene.background = new THREE.Color(0x87b5d6);
       scene.fog.color.setHex(0x87b5d6);
+      scene.fog.near = 180; scene.fog.far = 420;
+      hemi.color.setHex(0xbfd9ff); hemi.groundColor.setHex(0x8a7a5a);
       hemi.intensity = 0.9;
       sun.color.setHex(0xfff2cc);
       sun.intensity = 2.2;
       sun.position.set(80, 140, 40);
+      sunDisc.visible = false; sunHalo.visible = false;
     }
   },
   reset() {
@@ -235,6 +251,8 @@ const game = {
     // Wanted + police + heli.
     updateWanted(wanted, dt, scene, rng, player.x, player.z, player.angle, () => onBusted());
     updateHeli(heli, dt, player.x, player.z, game.time, player.inCar ? player.inCar.angle : player.angle);
+    // The ferris wheel turns slowly, day and night.
+    if (city.ferris) city.ferris.rotation.z += dt * 0.07;
     // Missions.
     updateMissions(missions, dt, game, player);
     // Combat timers.
@@ -254,6 +272,9 @@ const game = {
     }
   },
 };
+
+// Debug/test handle: lets a playthrough script start missions and step the game.
+window.__azura = game;
 
 function onCrash(speed) {
   const car = player.inCar;
@@ -304,7 +325,7 @@ function handleCollisions(dt) {
           car.condition = Math.max(0, car.condition - 4);
           if (other.mode !== 'police' && other.mode !== 'roadblock') other.condition = Math.max(0, (other.condition ?? 100) - 8);
           audio.noise(0.1, 0.16);
-          if (other === missions.targetCar && missions.active === 3) {
+          if (other === missions.targetCar && MISSIONS[missions.active] && MISSIONS[missions.active].stages[missions.stage] && MISSIONS[missions.active].stages[missions.stage].kind === 'ram') {
             const now = performance.now();
             if (!game._ramT || now - game._ramT > 800) { game._ramT = now; missions.hits += 1; toast(`RAMMED! ${missions.hits}/3`); }
           }
@@ -384,7 +405,7 @@ function handleInput() {
     const id = nextMission(missions);
     if (missions.active < 0 && id >= 0) startMission(missions, id, game);
     else if (missions.active >= 0) toast('Mission already active — finish it first!');
-    else toast('All 7 missions complete!');
+    else toast('All 10 missions complete!');
   }
   for (let i = 0; i < 4; i++) {
     if (edge(`Digit${i + 1}`)) {
@@ -419,7 +440,7 @@ function applySave(d) {
   player.armour = d.armour ?? 50;
   player.rep = d.rep ?? 0;
   player.x = d.x ?? 18; player.z = d.z ?? 18;
-  missions.done = d.done ?? [false, false, false, false, false, false, false];
+  missions.done = d.done ?? [false, false, false, false, false, false, false, false, false, false];
   game.clockMinutes = d.clock ?? 540;
   game.day = d.day ?? 1;
   radio.station = d.station ?? 0;

@@ -66,4 +66,4 @@ export function repRank(xp) {
   return { level: r + 1, title: REP_RANKS[r].title, cur: xp - REP_RANKS[r].xp, need: next ? next.xp - REP_RANKS[r].xp : 0, maxed: !next };
 }
 
-export const MISSION_REWARDS = [250, 400, 350, 500, 600, 700, 1500];
+export const MISSION_REWARDS = [250, 400, 350, 500, 600, 700, 1500, 800, 900, 2000];

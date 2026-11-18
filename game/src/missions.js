@@ -1,4 +1,4 @@
-// Seven story jobs for Jax and the crew (Mara the fixer, Dex the driver, Lena the hacker,
+// Ten story jobs for Jax and the crew (Mara the fixer, Dex the driver, Lena the hacker,
 // Big T the muscle). Each mission is a chain of stages; the HUD shows MISSION X/7, the
 // current stage (STAGE 1/4...), the objective and the NEXT job. Rewards pay cash + REP.
 import * as THREE from '../vendor/three.module.min.js';
@@ -72,6 +72,31 @@ export const MISSIONS = [
       { text: 'Escape to the airstrip — four stars and counting', kind: 'escape', x: 0, z: 114, wanted: 4 },
     ],
   },
+  {
+    id: 7, name: 'Casino Chips',
+    intro: { who: 'DEX', text: 'The Coral Row casino skims chips off every table. Walk in, grab the bag, and don\'t stop running till you\'re clear.' },
+    stages: [
+      { text: 'Reach the Coral Row casino', kind: 'point', x: 114, z: 18 },
+      { text: 'Grab the chip bag — hold the floor for 3s', kind: 'grab', x: 114, z: 18, hold: 3 },
+      { text: 'Escape to the hideout with the heat on', kind: 'escape', x: 0, z: -30, wanted: 2 },
+    ],
+  },
+  {
+    id: 8, name: 'The Ferry Job',
+    intro: { who: 'LENA', text: 'A ferry leaves the south pier at dawn with a car the crew needs. Steal a ride and deliver it to the pier — quiet, no heat.' },
+    stages: [
+      { text: 'Steal any car (press E near one)', kind: 'steal' },
+      { text: 'Deliver the car to the south pier', kind: 'point', x: -78, z: -118 },
+    ],
+  },
+  {
+    id: 9, name: 'Azura Legend',
+    intro: { who: 'BIGT', text: 'Last one, Jax. Tail the mayor\'s courier, then run for the airstrip with everything on you. Make it count — make us legends.' },
+    stages: [
+      { text: 'Tail the mayor\'s courier — stay within 25m for 12s', kind: 'follow', need: 12, range: 25 },
+      { text: 'Escape to the airstrip — four stars and counting', kind: 'escape', x: 0, z: 114, wanted: 4 },
+    ],
+  },
 ];
 
 export function createMissionState(scene) {
@@ -88,7 +113,7 @@ export function createMissionState(scene) {
   ring.visible = false;
   scene.add(ring);
   return {
-    active: -1, stage: 0, timer: 0, done: [false, false, false, false, false, false, false],
+    active: -1, stage: 0, timer: 0, done: [false, false, false, false, false, false, false, false, false, false],
     beacon, ring, targetCar: null, hits: 0, closeT: 0, holdT: 0, waitT: 0,
     dialog: null, dialogT: 0,
   };
@@ -106,7 +131,10 @@ export function startMission(ms, id, game) {
   const m = MISSIONS[id];
   say(ms, m.intro.who, m.intro.text, 7);
   game.toast(`${m.name} — mission started!`);
-  if (id === 2 || id === 3) game.spawnTargetCar(id === 3 ? 'flee' : 'loop');
+  // Any mission with a follow/ram stage needs a target car on the road.
+  if (m.stages.some((s) => s.kind === 'follow' || s.kind === 'ram')) {
+    game.spawnTargetCar(m.stages.some((s) => s.kind === 'ram') ? 'flee' : 'loop');
+  }
   const st = m.stages[0];
   if (st && st.wanted) game.setWanted(st.wanted);
   if (st && st.heli) game.setHeli(true);

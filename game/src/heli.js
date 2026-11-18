@@ -66,13 +66,13 @@ export function makeHeliMesh() {
   g.add(spotTarget);
   spot.target = spotTarget;
   const poolGeo = new THREE.CircleGeometry(4.5, 20);
-  const pool = new THREE.Mesh(poolGeo, new THREE.MeshBasicMaterial({ color: 0xfff2a0, transparent: true, opacity: 0.3, depthWrite: false }));
+  const pool = new THREE.Mesh(poolGeo, new THREE.MeshBasicMaterial({ color: 0xfff2a0, transparent: true, opacity: 0.34, depthWrite: false }));
   pool.rotation.x = -Math.PI / 2;
   g.add(body); g.add(stripe); g.add(nose); g.add(tail); g.add(fin); g.add(rotor); g.add(tailRotor); g.add(spot); g.add(pool);
   // Visible light beam: a translucent cone from the belly to the ground.
   const beam = new THREE.Mesh(
     new THREE.ConeGeometry(4.2, 8, 20, 1, true),
-    new THREE.MeshBasicMaterial({ color: 0xfff2a0, transparent: true, opacity: 0.10, side: THREE.DoubleSide, depthWrite: false }),
+    new THREE.MeshBasicMaterial({ color: 0xfff2a0, transparent: true, opacity: 0.17, side: THREE.DoubleSide, depthWrite: false }),
   );
   beam.position.set(0, -4.8, 1.5);
   g.add(beam);
@@ -108,5 +108,5 @@ export function updateHeli(heli, dt, px, pz, time, heading) {
   // Spotlight tracks the player.
   heli.mesh.userData.spotTarget.position.set(px - heli.x, -heli.y, pz - heli.z);
   heli.mesh.userData.pool.position.set(px - heli.x, -heli.y + 0.3, pz - heli.z);
-  heli.mesh.userData.pool.material.opacity = 0.22 + 0.1 * Math.sin(time * 6);
+  heli.mesh.userData.pool.material.opacity = 0.28 + 0.1 * Math.sin(time * 6);
 }

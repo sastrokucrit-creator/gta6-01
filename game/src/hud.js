@@ -4,6 +4,7 @@
 // (bottom-centre), speedometer + car name + condition + radio + gear (bottom-right).
 import { HALF, ROAD_CENTERS, districtAt, MISSION_REWARDS } from './config.js';
 import { SPEAKERS } from './missions.js';
+import { drawPortrait } from './portraits.js';
 import { weaponHud } from './weapons.js';
 import { unitList } from './wanted.js';
 import { radioLabel } from './radio.js';
@@ -33,14 +34,14 @@ export function updateHud(game) {
     const m = game.missionDefs[ms.active];
     const st = m.stages[ms.stage];
     const next = game.missionDefs[ms.active + 1];
-    mt.querySelector('.mtitle').textContent = `MISSION ${ms.active + 1}/7 · ${m.name.toUpperCase()}`;
+    mt.querySelector('.mtitle').textContent = `MISSION ${ms.active + 1}/10 · ${m.name.toUpperCase()}`;
     mt.querySelector('.mobj').textContent = `STAGE ${ms.stage + 1}/${m.stages.length} — ${st.text}`;
     mt.querySelector('.mnext').textContent = next ? `NEXT: ${next.name}` : 'NEXT: — final job —';
     mt.querySelector('.mtimer').textContent = ms.timer > 0 ? `⏱ ${Math.ceil(ms.timer)}s` : '';
     mt.querySelector('.mreward').textContent = `REWARD $${MISSION_REWARDS[ms.active].toLocaleString('en-US')}`;
   } else {
     const nextId = game.nextMissionId();
-    mt.querySelector('.mtitle').textContent = nextId >= 0 ? `MISSION ${nextId + 1}/7 READY` : 'ALL 7 MISSIONS DONE';
+    mt.querySelector('.mtitle').textContent = nextId >= 0 ? `MISSION ${nextId + 1}/10 READY` : 'ALL 10 MISSIONS DONE';
     mt.querySelector('.mobj').textContent = nextId >= 0 ? game.missionDefs[nextId].name : 'Free roam — Azura Bay is yours.';
     mt.querySelector('.mnext').textContent = nextId >= 0 ? 'Press M to start' : '';
     mt.querySelector('.mtimer').textContent = '';
@@ -82,8 +83,7 @@ export function updateHud(game) {
   if (ms.dialogT > 0 && ms.dialog) {
     dlg.style.display = 'block';
     const sp = SPEAKERS[ms.dialog.who] || SPEAKERS.MARA;
-    $('portrait').textContent = sp.initial;
-    $('portrait').style.background = sp.color;
+    drawPortrait($('portrait'), ms.dialog.who);
     dlg.querySelector('.dname').textContent = sp.name;
     dlg.querySelector('.dtext').textContent = ms.dialog.text;
   } else dlg.style.display = 'none';
