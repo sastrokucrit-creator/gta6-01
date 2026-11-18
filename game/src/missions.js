@@ -1,7 +1,7 @@
 // Seven story jobs for Jax and the crew (Mara the fixer, Dex the driver, Lena the hacker,
 // Big T the muscle). Each mission is a chain of stages; the HUD shows MISSION X/7, the
 // current stage (STAGE 1/4...), the objective and the NEXT job. Rewards pay cash + REP.
-import * as THREE from '../vendor/three.module.js';
+import * as THREE from '../vendor/three.module.min.js';
 import { MISSION_REWARDS } from './config.js';
 
 export const SPEAKERS = {

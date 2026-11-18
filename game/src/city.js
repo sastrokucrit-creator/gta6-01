@@ -2,7 +2,7 @@
 // 1-4 procedural buildings with canvas window textures, plus trees, lamps and sidewalks.
 // Buildings are solid AABBs (cars and the player collide with them). The sea glitters to the
 // south (negative Z) beyond a palm-lined beach.
-import * as THREE from '../vendor/three.module.js';
+import * as THREE from '../vendor/three.module.min.js';
 import { BLOCK, GRID, HALF, PITCH, ROAD, ROAD_CENTERS } from './config.js';
 import { pick, range, rangeInt } from './rng.js';
 

@@ -1,7 +1,7 @@
 // The player, Jax: a low-poly character on foot, and the arcade driving model when in a car.
 // On foot: WASD relative to the camera, Shift to run, Space to jump. In a car: W/S throttle and
 // brake/reverse, A/D steer, Space handbrake. Collisions are circle-vs-building-AABB.
-import * as THREE from '../vendor/three.module.js';
+import * as THREE from '../vendor/three.module.min.js';
 import { CAR, PLAYER } from './config.js';
 import { hitsBuilding } from './city.js';
 

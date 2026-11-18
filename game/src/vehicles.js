@@ -1,7 +1,7 @@
 // Cars: boxy low-poly bodies with cabin, wheels and headlights. NPC traffic drives along
 // road lanes and turns at intersections; police cars chase the player. Parked cars line the
 // roads and can be stolen. Every car has an original model name and a condition bar (100 = new).
-import * as THREE from '../vendor/three.module.js';
+import * as THREE from '../vendor/three.module.min.js';
 import { CAR_NAMES, HALF, ROAD_CENTERS, TAXI_NAME } from './config.js';
 import { pick, range } from './rng.js';
 import { nearestRoadCenter } from './city.js';

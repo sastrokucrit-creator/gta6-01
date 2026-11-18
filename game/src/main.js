@@ -2,7 +2,7 @@
 // follows third-person (on foot or in a car); the HUD is dense on all sides. ?seed=N fixes
 // the city; ?shot=chase|mission|foot|dusk stages that scene, paints it a few times and
 // sets window.__shotReady for a screenshot. ?dusk=1 forces sunset lighting.
-import * as THREE from '../vendor/three.module.js';
+import * as THREE from '../vendor/three.module.min.js';
 import { STEP, HALF, ROAD_CENTERS, CAR, repRank } from './config.js';
 import { makeRng } from './rng.js';
 import { buildCity, hitsBuilding } from './city.js';

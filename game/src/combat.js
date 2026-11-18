@@ -1,7 +1,7 @@
 // Combat: punch (F) knocks a nearby pedestrian down; shoot (click) fires a hitscan ray
 // with the current weapon's damage, rate and range, plus a tracer line and muzzle flash.
 // Shooting and punching raise the wanted level. Cars take damage and lose condition.
-import * as THREE from '../vendor/three.module.js';
+import * as THREE from '../vendor/three.module.min.js';
 
 export function createCombat(scene) {
   const tracerGeo = new THREE.BufferGeometry();
