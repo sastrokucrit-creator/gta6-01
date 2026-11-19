@@ -3,6 +3,7 @@
 // current stage (STAGE 1/4...), the objective and the NEXT job. Rewards pay cash + REP.
 import * as THREE from '../vendor/three.module.min.js';
 import { MISSION_REWARDS } from './config.js';
+import { unlockWeapons } from './weapons.js';
 
 export const SPEAKERS = {
   MARA: { name: 'MARA', initial: 'M', color: '#c0392b' },
@@ -11,6 +12,20 @@ export const SPEAKERS = {
   LENA: { name: 'LENA', initial: 'L', color: '#8e44ad' },
   BIGT: { name: 'BIG T', initial: 'T', color: '#27ae60' },
 };
+
+// The twelve jobs run as four chapters of three, so the campaign reads like a
+// story with acts instead of a flat list: small-time wheels, then the dock crew,
+// then the high-stakes jobs, then the legend-making finale.
+export const CHAPTERS = [
+  { num: 1, name: 'FIRST WHEELS', from: 0, to: 2 },
+  { num: 2, name: 'THE DOCK CREW', from: 3, to: 5 },
+  { num: 3, name: 'HIGH STAKES', from: 6, to: 8 },
+  { num: 4, name: 'AZURA LEGEND', from: 9, to: 11 },
+];
+export function chapterOf(missionId) {
+  for (const c of CHAPTERS) if (missionId >= c.from && missionId <= c.to) return c;
+  return CHAPTERS[0];
+}
 
 // Stage kinds: point (reach a marker), steal (get in any car), follow (stay near target car),
 // ram (ram the target car N times), grab (stand in a zone), wait (survive with wanted).
@@ -78,7 +93,7 @@ export const MISSIONS = [
     stages: [
       { text: 'Reach the Coral Row casino', kind: 'point', x: 114, z: 18 },
       { text: 'Grab the chip bag — hold the floor for 3s', kind: 'grab', x: 114, z: 18, hold: 3 },
-      { text: 'Escape to the hideout with the heat on', kind: 'escape', x: 0, z: -30, wanted: 2 },
+      { text: 'Escape to the hideout before the timer ends', kind: 'escape', x: 0, z: -30, wanted: 2, time: 120 },
     ],
   },
   {
@@ -114,7 +129,7 @@ export const MISSIONS = [
       { text: 'Pick up Dex at the garage', kind: 'point', x: -100, z: -30 },
       { text: 'Pick up Lena in Neon Mile', kind: 'point', x: 18, z: 18 },
       { text: 'Grab the crown — hold the floor for 3s', kind: 'grab', x: 100, z: 66, hold: 3 },
-      { text: 'Escape to the airstrip — five stars and counting', kind: 'escape', x: 0, z: 114, wanted: 5 },
+      { text: 'Escape to the airstrip before the timer ends — five stars and counting', kind: 'escape', x: 0, z: 114, wanted: 5, time: 150 },
     ],
   },
 ];
@@ -196,7 +211,9 @@ export function updateMissions(ms, dt, game, player) {
   } else { ms.beacon.visible = false; ms.ring.visible = false; }
   const d = t ? Math.hypot(player.x - t.x, player.z - t.z) : 999;
 
-  if (st.time && st.kind === 'point') {
+  // Countdowns run on timed deliveries and timed escapes alike: the clock starts
+  // when the stage starts and the job fails when it hits zero.
+  if (st.time && (st.kind === 'point' || st.kind === 'escape')) {
     if (ms.timer <= 0) ms.timer = st.time;
     ms.timer -= dt;
     if (ms.timer <= 0) return failMission(ms, game, 'Out of time — the job failed.');
@@ -249,7 +266,11 @@ export function completeMission(ms, game) {
   game.player.money += reward;
   game.addRep(250 + ms.active * 60);
   ms.done[ms.active] = true;
-  game.toast(`Mission complete! +$${reward}`);
+  // A gun unlocks the moment the job that earns it is done — not on the next
+  // load. A weapon earned mid-session must be selectable mid-session.
+  unlockWeapons(game.weapons, ms.done);
+  const newly = game.weapons.slots.filter((s) => !s.locked && s.unlockMission === ms.active).map((s) => s.name);
+  game.toast(`Mission complete! +$${reward}${newly.length ? ` — ${newly.join(', ')} unlocked!` : ''}`);
   say(ms, 'MARA', `Clean work, Jax. $${reward} is yours. The crew is talking about you.`, 6);
   if (ms.targetCar) { ms.targetCar.mode = 'traffic'; ms.targetCar = null; }
   game.setHeli(false);

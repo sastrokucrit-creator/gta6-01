@@ -45,21 +45,29 @@ export const RADIO = [
   { freq: '107.7', name: 'TROPICANA 107.7', songs: ['Isla Breeze — Coco Loco', 'Mango Sky — Sol Band', 'Fiesta Bay — Los Palmeros'] },
 ];
 
-// Weapons: 4 slots. SMG unlocks after mission 2, shotgun after mission 4.
+// Weapons: 5 slots, each with a shop price on the HUD. SMG unlocks after the
+// third job, shotgun after the fifth, and the REAPER heavy rifle stays locked
+// until the final job is done.
 export const WEAPONS = [
-  { key: '1', name: 'FISTS', ammo: Infinity, damage: 0, rate: 0.45, range: 2.2, locked: false },
-  { key: '2', name: 'PISTOL', ammo: 60, damage: 34, rate: 0.32, range: 60, locked: false },
-  { key: '3', name: 'SMG', ammo: 120, damage: 18, rate: 0.11, range: 45, locked: true, unlockMission: 2 },
-  { key: '4', name: 'SHOTGUN', ammo: 24, damage: 80, rate: 0.9, range: 22, locked: true, unlockMission: 4 },
+  { key: '1', name: 'FISTS', price: 0, ammo: Infinity, damage: 0, rate: 0.45, range: 2.2, locked: false },
+  { key: '2', name: 'PISTOL', price: 1200, ammo: 60, damage: 34, rate: 0.32, range: 60, locked: false },
+  { key: '3', name: 'SMG', price: 3800, ammo: 120, damage: 18, rate: 0.11, range: 45, locked: true, unlockMission: 2 },
+  { key: '4', name: 'SHOTGUN', price: 5500, ammo: 24, damage: 80, rate: 0.9, range: 22, locked: true, unlockMission: 4 },
+  { key: '5', name: 'REAPER', price: 9500, ammo: 12, damage: 120, rate: 1.1, range: 80, locked: true, unlockMission: 11 },
 ];
 
-// REP ranks: XP from missions, escapes and steals.
+// REP ranks: XP from missions, escapes and steals. Six rungs, spaced so the
+// title climbs across the whole campaign: a job pays 250 + 60 * its index in REP,
+// so the running totals are 250, 560, 930, 1360, 1850, 2400, 3010, 3680, 4410,
+// 5200, 6050, 6960 — CORNER KID after job 3, BAY HUSTLER after job 5, WHEELMAN
+// after job 7, FIXER after job 10, and AZURA LEGEND only once the crown is home.
 export const REP_RANKS = [
   { xp: 0, title: 'STREET RAT' },
-  { xp: 400, title: 'CORNER KID' },
-  { xp: 1000, title: 'BAY HUSTLER' },
-  { xp: 1800, title: 'WHEELMAN' },
-  { xp: 2800, title: 'AZURA LEGEND' },
+  { xp: 600, title: 'CORNER KID' },
+  { xp: 1500, title: 'BAY HUSTLER' },
+  { xp: 2800, title: 'WHEELMAN' },
+  { xp: 4500, title: 'FIXER' },
+  { xp: 6500, title: 'AZURA LEGEND' },
 ];
 export function repRank(xp) {
   let r = 0;
@@ -68,4 +76,7 @@ export function repRank(xp) {
   return { level: r + 1, title: REP_RANKS[r].title, cur: xp - REP_RANKS[r].xp, need: next ? next.xp - REP_RANKS[r].xp : 0, maxed: !next };
 }
 
-export const MISSION_REWARDS = [250, 400, 350, 500, 600, 700, 1500, 800, 900, 2000, 2500, 3000];
+// Mission payouts: the jobs pay like a career, not pocket money. The first
+// eleven jobs total $85,000 on top of the $2,000 Jax starts with, so the crew
+// walks into the finale holding $87,000 — and the crown itself pays $60,000.
+export const MISSION_REWARDS = [3000, 4500, 4000, 5500, 6500, 7500, 9000, 8000, 10000, 12000, 15000, 60000];

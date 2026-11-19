@@ -12,13 +12,14 @@
   .panel { background: rgba(0,0,0,.5); border-radius: 8px; padding: 7px 10px; }
   /* Top-left: mission panel */
   #mission { position: absolute; top: 12px; left: 12px; width: 300px; line-height: 1.45; }
+  #mission .mchap { font-size: 12px; font-weight: bold; color: #9fd8ff; letter-spacing: 1px; }
   #mission .mtitle { font-size: 17px; font-weight: bold; color: #ffd23e; }
   #mission .mobj { font-size: 13px; }
   #mission .mnext { font-size: 12px; color: #9fd8ff; }
   #mission .mtimer { font-size: 15px; font-weight: bold; color: #ff8a7a; }
   #mission .mreward { font-size: 13px; font-weight: bold; color: #7dff9a; }
   /* Top-right: money, wanted, weapons, clock, sight */
-  #topright { position: absolute; top: 12px; right: 12px; text-align: right; }
+  #topright { position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
   #money { font-size: 24px; font-weight: bold; color: #7dff9a; }
   #wanted { font-size: 28px; letter-spacing: 4px; color: #ffd23e; line-height: 1.1; }
   #wanted .off { color: rgba(255,255,255,.25); }
@@ -55,6 +56,15 @@
   #portrait { width: 56px; height: 56px; border-radius: 50%; flex: none; display: block; background: #222831; border: 2px solid #fff; }
   #dialog .dname { font-size: 14px; font-weight: bold; color: #ffd23e; }
   #dialog .dtext { font-size: 15px; line-height: 1.35; }
+  /* Mid-right: crew ability cards */
+  #crew { position: absolute; right: 12px; top: 300px; width: 250px; line-height: 1.4; }
+  #crew .ctitle { font-size: 13px; font-weight: bold; color: #7fb8ff; letter-spacing: 1px; margin-bottom: 4px; }
+  #crew .crewcard { font-size: 12px; border: 1px solid #666; border-radius: 6px; padding: 4px 7px; margin-top: 4px; background: rgba(0,0,0,.35); }
+  #crew .crewcard.ready { border-color: #7dff9a; }
+  #crew .crewcard.ready b { color: #7dff9a; }
+  #crew .crewcard.cooling { opacity: .6; }
+  #crew .cdesc { color: #ddd; font-size: 11px; }
+  #crew .ccd { font-size: 11px; font-weight: bold; color: #ffd23e; }
   /* Bottom-right: speedometer + car + radio */
   #drive { position: absolute; bottom: 12px; right: 12px; text-align: right; }
   #speedo { font-size: 40px; font-weight: bold; line-height: 1; }
@@ -62,6 +72,7 @@
   #carname { font-size: 15px; font-weight: bold; color: #ffe27a; }
   #condbar { width: 170px; height: 9px; background: rgba(0,0,0,.65); border: 1px solid #fff; border-radius: 5px; overflow: hidden; margin: 3px 0 3px auto; }
   #condfill { height: 100%; background: #37d67a; width: 100%; }
+  #condlabel { font-size: 12px; font-weight: bold; color: #ffe27a; }
   #radio { font-size: 13px; color: #9fd8ff; }
   #gear { font-size: 13px; }
   #crosshair { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); font-size: 22px; display: none; }
@@ -83,7 +94,7 @@
 <body>
 <canvas id="game" aria-label="Azura Bay: an open-world crime game. Walk, drive, steal cars, escape the police and finish missions."></canvas>
 <div id="hud">
-  <div id="mission" class="panel"><div class="mtitle">NO MISSION</div><div class="mobj">Press M to start the next job</div><div class="mnext"></div><div class="mtimer"></div><div class="mreward"></div></div>
+  <div id="mission" class="panel"><div class="mchap"></div><div class="mtitle">NO MISSION</div><div class="mobj">Press M to start the next job</div><div class="mnext"></div><div class="mtimer"></div><div class="mreward"></div></div>
   <div id="topright">
     <div id="money" class="panel">$0</div>
     <div id="wanted"><span class="off">★</span><span class="off">★</span><span class="off">★</span><span class="off">★</span><span class="off">★</span></div>
@@ -92,6 +103,7 @@
     <div id="sight" class="hidden">HIDDEN</div>
   </div>
   <div id="police" class="panel"><div class="ptitle">POLICE RESPONSE</div><div id="units"></div></div>
+  <div id="crew" class="panel"><div class="ctitle">CREW ABILITIES</div></div>
   <div id="mapwrap"><canvas id="minimap" width="170" height="170"></canvas><div id="district">NEON MILE</div></div>
   <div id="vitals" class="panel">
     <div>HEALTH <span id="hptext">100</span></div><div class="bar"><div id="healthfill"></div></div>
@@ -103,13 +115,14 @@
     <div id="speedo" style="display:none">0 <small>km/h</small></div>
     <div id="carname"></div>
     <div id="condbar" style="display:none"><div id="condfill"></div></div>
+    <div id="condlabel" style="display:none"></div>
     <div id="radio"></div>
     <div id="gear"></div>
   </div>
   <div id="crosshair">＋</div>
   <div id="toast"></div>
   <div id="roadblock"></div>
-  <div id="hint">WASD move · SHIFT run · SPACE jump · E enter/steal car · F punch · CLICK shoot · 1-4 weapons · R radio · M mission · P pause · drag mouse to look</div>
+  <div id="hint">WASD move · SHIFT run · SPACE jump · E enter/steal car · F punch · CLICK shoot · 1-5 weapons · Q/C/V crew abilities · R radio · M mission · P pause · drag mouse to look</div>
 </div>
 <div id="menu">
   <h1>AZURA BAY</h1>
@@ -120,7 +133,7 @@
   <button id="btnStart">START</button>
   <button id="btnContinue" class="secondary" style="display:none">CONTINUE</button>
   <div class="controls">WASD move · SHIFT run · SPACE jump · E enter / steal car · F punch · CLICK shoot<br>
-  1-4 weapons · R radio · Drive: W accelerate · S brake / reverse · A/D steer · SPACE handbrake · E exit<br>
+  1-5 weapons · Q/C/V crew abilities · R radio · Drive: W accelerate · S brake / reverse · A/D steer · SPACE handbrake · E exit<br>
   M mission · P pause · progress saves automatically · garage repairs your car</div>
 </div>
 <div id="pause"><h1>PAUSED</h1><button id="btnResume">RESUME</button><button id="btnQuit">QUIT TO TITLE</button></div>

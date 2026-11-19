@@ -31,7 +31,7 @@ export function createPlayer(scene, x, z) {
   const mesh = makePlayerMesh();
   scene.add(mesh);
   const p = {
-    mesh, x, z, y: 0, vy: 0, angle: 0, health: 100, armour: 50, money: 1500, rep: 0,
+    mesh, x, z, y: 0, vy: 0, angle: 0, health: 100, armour: 50, money: 2000, rep: 0,
     inCar: null, speed: 0, walkPhase: 0, onGround: true, punchCooldown: 0, shootCooldown: 0,
   };
   p.mesh.position.set(x, 0, z);

@@ -28,7 +28,7 @@ export function unlockWeapons(w, doneMissions) {
 
 export function weaponHud(w) {
   return w.slots.map((s, i) => ({
-    key: s.key, name: s.name,
+    key: s.key, name: s.name, price: s.price || 0,
     ammo: s.ammo === Infinity ? '∞' : String(s.ammo),
     sel: i === w.current, locked: s.locked,
   }));
