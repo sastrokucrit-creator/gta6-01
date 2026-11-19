@@ -8,7 +8,7 @@ import { spawnPolice, updatePolice, makeCarMesh, Car, POLICE_COLOR } from './veh
 const UNIT_NAMES = ['APD-1 "VULTURE"', 'APD-2 "HAMMER"', 'APD-3 "VIPER"', 'APD-4 "FALCON"', 'APD-5 "BULLDOG"', 'APD-6 "COBRA"', 'APD-7 "HAWK"', 'APD-8 "TALON"'];
 
 export function createWanted() {
-  return { stars: 0, heat: 0, quiet: 0, police: [], roadblock: [], roadblockT: 0, nearest: Infinity, seen: false };
+  return { stars: 0, heat: 0, quiet: 0, police: [], roadblock: [], roadblockT: 0, nearest: Infinity, seen: false, ghostT: 0 };
 }
 
 export function addWanted(w, n) {
@@ -71,8 +71,11 @@ export function updateWanted(w, dt, scene, rng, px, pz, angle, onBusted) {
     scene.remove(c.mesh);
   }
   let nearest = Infinity;
+  // Ghost window (Lena's EYES OUT): the police cruise at half speed and cannot
+  // see the player, so the heat cannot find its target while it lasts.
+  const ghost = w.ghostT > 0;
   for (const c of w.police) {
-    const d = updatePolice(c, dt, px, pz, 16 + w.stars * 2.2);
+    const d = updatePolice(c, dt, px, pz, (16 + w.stars * 2.2) * (ghost ? 0.5 : 1));
     c._dist = d;
     nearest = Math.min(nearest, d);
     if (d < 2.6) onBusted();
@@ -84,6 +87,7 @@ export function updateWanted(w, dt, scene, rng, px, pz, angle, onBusted) {
   } else if (w.roadblock.length > 0) clearRoadblock(w, scene);
   w.nearest = nearest;
   w.seen = nearest < 40;
+  if (ghost) w.seen = false; // cameras looped: unseen even at close range
   if (w.stars > 0) {
     if (nearest > 55) w.quiet += dt;
     else w.quiet = 0;

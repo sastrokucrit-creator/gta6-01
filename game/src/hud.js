@@ -3,9 +3,10 @@
 // (bottom-left), health/armour/REP (bottom-left), character dialogue with portrait
 // (bottom-centre), speedometer + car name + condition + radio + gear (bottom-right).
 import { HALF, ROAD_CENTERS, districtAt, MISSION_REWARDS } from './config.js';
-import { SPEAKERS } from './missions.js';
+import { SPEAKERS, chapterOf } from './missions.js';
 import { drawPortrait } from './portraits.js';
 import { weaponHud } from './weapons.js';
+import { crewHud } from './crew.js';
 import { unitList } from './wanted.js';
 import { radioLabel } from './radio.js';
 
@@ -25,34 +26,55 @@ function fmtClock(minutes) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
+// Mission countdowns read as minutes:seconds (2:28, not 148s).
+function fmtTimer(seconds) {
+  const s = Math.max(0, Math.ceil(seconds));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+// Car condition in words as well as a bar: the number and the verdict side by side.
+function condLabel(condition) {
+  if (condition >= 75) return 'PRISTINE';
+  if (condition >= 50) return 'GOOD';
+  if (condition >= 25) return 'DAMAGED';
+  if (condition > 0) return 'BATTERED';
+  return 'WRECKED';
+}
+
 export function updateHud(game) {
   const p = game.player;
   const ms = game.missions;
-  // Mission panel (top-left).
+  // Mission panel (top-left): chapter + mission + stage + timer + reward.
   const mt = $('mission');
   if (ms.active >= 0) {
     const m = game.missionDefs[ms.active];
     const st = m.stages[ms.stage];
     const next = game.missionDefs[ms.active + 1];
+    const ch = chapterOf(ms.active);
+    mt.querySelector('.mchap').textContent = `CH.${ch.num} · ${ch.name}`;
     mt.querySelector('.mtitle').textContent = `MISSION ${ms.active + 1}/12 · ${m.name.toUpperCase()}`;
     mt.querySelector('.mobj').textContent = `STAGE ${ms.stage + 1}/${m.stages.length} — ${st.text}`;
     mt.querySelector('.mnext').textContent = next ? `NEXT: ${next.name}` : 'NEXT: — final job —';
-    mt.querySelector('.mtimer').textContent = ms.timer > 0 ? `⏱ ${Math.ceil(ms.timer)}s` : '';
+    mt.querySelector('.mtimer').textContent = ms.timer > 0 ? `⏱ ${fmtTimer(ms.timer)}` : '';
     mt.querySelector('.mreward').textContent = `REWARD $${MISSION_REWARDS[ms.active].toLocaleString('en-US')}`;
   } else {
     const nextId = game.nextMissionId();
+    const ch = nextId >= 0 ? chapterOf(nextId) : null;
+    mt.querySelector('.mchap').textContent = ch ? `CH.${ch.num} · ${ch.name}` : '';
     mt.querySelector('.mtitle').textContent = nextId >= 0 ? `MISSION ${nextId + 1}/12 READY` : 'ALL 12 MISSIONS DONE';
     mt.querySelector('.mobj').textContent = nextId >= 0 ? game.missionDefs[nextId].name : 'Free roam — Azura Bay is yours.';
     mt.querySelector('.mnext').textContent = nextId >= 0 ? 'Press M to start' : '';
     mt.querySelector('.mtimer').textContent = '';
     mt.querySelector('.mreward').textContent = nextId >= 0 ? `REWARD $${MISSION_REWARDS[nextId].toLocaleString('en-US')}` : '';
   }
-  // Top-right.
+  // Top-right: money, wanted stars, weapon slots with prices, day+time, sight.
   $('money').textContent = `$${p.money.toLocaleString('en-US')}`;
   const stars = $('wanted').children;
   for (let i = 0; i < stars.length; i++) stars[i].className = i < game.wanted.stars ? '' : 'off';
-  $('weapons').innerHTML = weaponHud(game.weapons).map((s) =>
-    `<span class="${s.sel ? 'sel' : ''} ${s.locked ? 'locked' : ''}">${s.key} ${s.name} ${s.locked ? '🔒' : s.ammo}</span>`).join('');
+  $('weapons').innerHTML = weaponHud(game.weapons).map((s) => {
+    const price = s.price > 0 ? `$${s.price.toLocaleString('en-US')}` : '';
+    return `<span class="${s.sel ? 'sel' : ''} ${s.locked ? 'locked' : ''}">${s.key} ${s.name} ${price} ${s.locked ? '🔒' : s.ammo}</span>`;
+  }).join('');
   $('clock').textContent = `DAY ${game.day} · ${fmtClock(game.clockMinutes)}`;
   const sight = $('sight');
   if (game.wanted.stars > 0) {
@@ -77,13 +99,14 @@ export function updateHud(game) {
     rb.style.display = 'block';
     rb.textContent = '⚠ ROADBLOCK AHEAD — smash through or go around!';
   } else rb.style.display = 'none';
-  // Vitals + REP (bottom-left).
+  // Vitals + RANK (bottom-left): the rank is the career headline, so it reads
+  // RANK + title + RP progress, never just a number.
   $('healthfill').style.width = `${Math.max(0, p.health)}%`;
   $('hptext').textContent = Math.max(0, Math.round(p.health));
   $('armourfill').style.width = `${Math.max(0, p.armour)}%`;
   $('armtext').textContent = Math.max(0, Math.round(p.armour));
   const rep = game.repInfo();
-  $('rep').textContent = `REP ${rep.level} · ${rep.title} ${rep.maxed ? 'MAX' : `${rep.cur}/${rep.need}`}`;
+  $('rep').textContent = `RANK ${rep.level} · ${rep.title} ${rep.maxed ? 'MAX' : `${rep.cur}/${rep.need} RP`}`;
   $('repbar').firstElementChild.style.width = rep.maxed ? '100%' : `${Math.round((rep.cur / rep.need) * 100)}%`;
   // District under minimap.
   $('district').textContent = districtAt(p.x, p.z);
@@ -96,7 +119,7 @@ export function updateHud(game) {
     dlg.querySelector('.dname').textContent = sp.name;
     dlg.querySelector('.dtext').textContent = ms.dialog.text;
   } else dlg.style.display = 'none';
-  // Driving cluster (bottom-right).
+  // Driving cluster (bottom-right): speed, car, condition bar + label, radio, gear.
   const sp = $('speedo');
   if (p.inCar) {
     sp.style.display = 'block';
@@ -106,15 +129,23 @@ export function updateHud(game) {
     const cf = $('condfill');
     cf.style.width = `${Math.max(0, p.inCar.condition)}%`;
     cf.style.background = p.inCar.condition > 50 ? '#37d67a' : p.inCar.condition > 25 ? '#ffd23e' : '#ff5a4e';
+    const cl = $('condlabel');
+    cl.style.display = 'block';
+    cl.textContent = `CONDITION ${Math.round(Math.max(0, p.inCar.condition))}% · ${condLabel(p.inCar.condition)}`;
     $('radio').textContent = `♪ ${radioLabel(game.radio)}`;
     $('gear').textContent = `GEAR ${p.inCar.speed > 0.5 ? 'D' : p.inCar.speed < -0.5 ? 'R' : 'N'} · ${game.radio.station + 1}/4 · press R`;
   } else {
     sp.style.display = 'none';
     $('carname').textContent = '';
     $('condbar').style.display = 'none';
+    $('condlabel').style.display = 'none';
     $('radio').textContent = '';
     $('gear').textContent = '';
   }
+  // Crew abilities (mid-right): three cards, key + name + who + effect + cooldown.
+  const crewEl = $('crew');
+  crewEl.innerHTML = `<div class="ctitle">CREW ABILITIES</div>` + crewHud(game).map((c) =>
+    `<div class="crewcard ${c.ready ? 'ready' : 'cooling'}"><b>[${c.key}] ${c.name}</b> · ${c.who}<br><span class="cdesc">${c.desc}</span><br><span class="ccd">${c.ready ? 'READY' : `READY IN ${c.cd}s`}</span></div>`).join('');
   $('crosshair').style.display = game.armed ? 'block' : 'none';
   drawMinimap(game);
 }
@@ -170,6 +201,16 @@ function drawMinimap(game) {
     mapCtx.beginPath(); mapCtx.arc(mx, my, 2, 0, Math.PI * 2); mapCtx.fill();
   }
   const [px, py] = toMap(game.player.x, game.player.z);
+  // Search zone: when the heat is on and the police can see the player, a red
+  // ring pulses around the player's arrow — the search follows the player.
+  if (game.wanted.stars >= 3 && game.wanted.seen) {
+    const pulse = 22 + Math.sin(performance.now() / 220) * 5;
+    mapCtx.strokeStyle = 'rgba(255, 60, 50, 0.95)';
+    mapCtx.lineWidth = 2.5;
+    mapCtx.beginPath(); mapCtx.arc(px, py, pulse, 0, Math.PI * 2); mapCtx.stroke();
+    mapCtx.fillStyle = 'rgba(255, 60, 50, 0.14)';
+    mapCtx.beginPath(); mapCtx.arc(px, py, pulse, 0, Math.PI * 2); mapCtx.fill();
+  }
   mapCtx.save();
   mapCtx.translate(px, py);
   mapCtx.rotate(-game.player.angle + Math.PI);

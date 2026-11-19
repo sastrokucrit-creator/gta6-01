@@ -14,6 +14,7 @@ import { createHeli, updateHeli } from './heli.js';
 import { MISSIONS, createMissionState, startMission, updateMissions, missionTarget, nextMission } from './missions.js';
 import { createCombat, punch, shoot, updateCombat } from './combat.js';
 import { createWeapons, currentWeapon, selectWeapon, unlockWeapons, spendAmmo, refillAmmo } from './weapons.js';
+import { createCrew, useCrew, updateCrew } from './crew.js';
 import { createRadio, nextStation, updateRadio, radioLabel } from './radio.js';
 import { createAudio } from './audio.js';
 import { initHud, updateHud, toast } from './hud.js';
@@ -72,8 +73,12 @@ const heli = createHeli(scene);
 const missions = createMissionState(scene);
 const combat = createCombat(scene);
 const weapons = createWeapons();
+const crew = createCrew();
 const radio = createRadio();
 const audio = createAudio();
+// Keyboard + mouse listeners: without this call no key ever reaches the game,
+// so it must run once at boot, before the first frame.
+initInput(canvas);
 
 // Garage / safehouse at Mara's garage (Docklands).
 const garagePos = { x: -100, z: -30 };
@@ -98,7 +103,7 @@ const garagePos = { x: -100, z: -30 };
 
 // --- Game object (what HUD, missions and shots talk to) ---
 const game = {
-  player, traffic, parked, peds, wanted, heli, missions, weapons, radio,
+  player, traffic, parked, peds, wanted, heli, missions, weapons, crew, radio,
   missionDefs: MISSIONS,
   clockMinutes: 9 * 60, day: 1, time: 0,
   armed: false, dusk: false,
@@ -221,11 +226,13 @@ const game = {
   },
   reset() {
     player.x = 18; player.z = 18; player.y = 0; player.angle = 0;
-    player.health = 100; player.armour = 50; player.money = 1500; player.rep = 0;
+    player.health = 100; player.armour = 50; player.money = 2000; player.rep = 0;
     player.inCar = null; player.mesh.visible = true;
     player.mesh.position.set(18, 0, 18);
     clearWanted(wanted, scene);
     heli.active = false;
+    wanted.ghostT = 0;
+    for (const s of crew.slots) s.cd = 0;
     missions.active = -1; missions.stage = 0; missions.done.fill(false);
     missions.dialog = null; missions.dialogT = 0;
     if (missions.targetCar) { scene.remove(missions.targetCar.mesh); missions.targetCar = null; }
@@ -255,8 +262,9 @@ const game = {
     if (city.ferris) city.ferris.rotation.z += dt * 0.07;
     // Missions.
     updateMissions(missions, dt, game, player);
-    // Combat timers.
+    // Combat timers + crew cooldowns.
     updateCombat(combat, dt);
+    updateCrew(game, dt);
     // Radio.
     updateRadio(radio, dt);
     // Collisions.
@@ -308,10 +316,13 @@ function onWasted() {
 
 function handleCollisions(dt) {
   const p = player;
-  // Player car vs other cars.
+  // Player car vs other cars. The mission target car counts too: without it in
+  // this list a ram stage can never register a hit, however hard the player hits it.
   if (p.inCar) {
     const car = p.inCar;
-    for (const other of [...traffic, ...parked, ...wanted.police, ...wanted.roadblock]) {
+    const others = [...traffic, ...parked, ...wanted.police, ...wanted.roadblock];
+    if (missions.targetCar) others.push(missions.targetCar);
+    for (const other of others) {
       if (other === car) continue;
       const d = Math.hypot(other.x - car.x, other.z - car.z);
       if (d < 3.8 && d > 0.01) {
@@ -407,7 +418,11 @@ function handleInput() {
     else if (missions.active >= 0) toast('Mission already active — finish it first!');
     else toast('All 12 missions complete!');
   }
-  for (let i = 0; i < 4; i++) {
+  // Crew abilities: Q Mara (swap plates), C Dex (quick fix), V Lena (eyes out).
+  if (edge('KeyQ')) { if (!useCrew(game, 0)) toast('SWAP PLATES is cooling down — wait for the card'); }
+  if (edge('KeyC')) { if (!useCrew(game, 1)) toast('QUICK FIX needs a car — or is cooling down'); }
+  if (edge('KeyV')) { if (!useCrew(game, 2)) toast('EYES OUT is cooling down — wait for the card'); }
+  for (let i = 0; i < 5; i++) {
     if (edge(`Digit${i + 1}`)) {
       if (selectWeapon(weapons, i)) toast(`${currentWeapon(weapons).name} ready`);
       else if (weapons.slots[i].locked) toast(`${weapons.slots[i].name} is LOCKED — finish more missions`);
@@ -435,7 +450,7 @@ let screen = 'menu';
 let paused = false;
 
 function applySave(d) {
-  player.money = d.money ?? 1500;
+  player.money = d.money ?? 2000;
   player.health = d.health ?? 100;
   player.armour = d.armour ?? 50;
   player.rep = d.rep ?? 0;

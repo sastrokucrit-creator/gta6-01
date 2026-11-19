@@ -41,10 +41,12 @@ export function stageShot(name, game) {
   game.reset();
   const g = game;
   // Mid-game staging: the shots show a player who has already earned their
-  // keep — several jobs done, a fat wallet, a REP rank to match — so the HUD
-  // reads like a career in progress, not a fresh start.
-  g.player.money = 18500;
-  g.player.rep = 1200;
+  // keep — several jobs done, a fat wallet, a RANK to match — so the HUD
+  // reads like a career in progress, not a fresh start. The wallet is the
+  // amount the crew holds walking into the finale ($2,000 start + $85,000
+  // from the first eleven jobs); the REP is the total after those jobs.
+  g.player.money = 87000;
+  g.player.rep = 6050;
   if (name === 'chase') {
     // Cover: high-speed chase at golden hour, wanted 4, police + helicopter +
     // roadblock, full HUD. The low amber sun and warm haze do the cinematic work.
@@ -76,7 +78,9 @@ export function stageShot(name, game) {
     simulate(g, SIM_SECONDS);
     // Re-accelerate for the frame so the speedo reads like a chase, and put one
     // police car ahead of the player so its light bar is visible on screen.
-    if (car) { car.speed = 36; g.spawnPoliceAhead(30); }
+    // The photo car is showroom-fresh: the sim's pile-up would otherwise leave
+    // the cover car wrecked, which is not the chase the cover is selling.
+    if (car) { car.speed = 36; car.condition = 100; g.spawnPoliceAhead(30); }
     g.snapHeli(); // the heli's lerp lags a moving target — snap it into frame
     // Bigger, closer chopper for the cover: pull it in from 36m to ~24m ahead,
     // lower, and scale it up so the spotlight reads.
@@ -117,7 +121,7 @@ export function stageShot(name, game) {
     const mt1 = g.traffic[3];
     if (mt1) { mt1.x = 110; mt1.z = 62; mt1.angle = -Math.PI / 2; mt1.speed = 9; mt1.sync(); }
     simulate(g, 1.0);
-    if (car) car.speed = 16; // re-accelerate so the speedo reads like a drive, not a stall
+    if (car) { car.speed = 16; car.condition = 100; } // re-accelerate so the speedo reads like a drive, not a stall; photo car is fresh
     return;
   }
   if (name === 'dusk') {
@@ -132,7 +136,7 @@ export function stageShot(name, game) {
     g.missions.dialog = { who: 'LENA', text: 'Sunset on the beach road. Even the cops look good in this light.' };
     g.missions.dialogT = 99;
     simulate(g, SIM_SECONDS);
-    if (car) car.speed = 18; // re-accelerate so the speedo reads like a drive, not a stall
+    if (car) { car.speed = 18; car.condition = 100; } // re-accelerate so the speedo reads like a drive, not a stall; the sim's police pile-up would otherwise leave the photo car wrecked
     policeBehind(g, 14);
     return;
   }
