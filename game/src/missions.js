@@ -3,6 +3,7 @@
 // current stage (STAGE 1/4...), the objective and the NEXT job. Rewards pay cash + REP.
 import * as THREE from '../vendor/three.module.min.js';
 import { MISSION_REWARDS } from './config.js';
+import { unlockWeapons } from './weapons.js';
 
 export const SPEAKERS = {
   MARA: { name: 'MARA', initial: 'M', color: '#c0392b' },
@@ -69,7 +70,7 @@ export const MISSIONS = [
       { text: 'Pick up Dex at the garage', kind: 'point', x: -100, z: -30 },
       { text: 'Pick up Lena in Neon Mile', kind: 'point', x: 18, z: 18 },
       { text: 'Reach the yacht at Marina Walk', kind: 'point', x: 100, z: -122 },
-      { text: 'Escape to the airstrip — four stars and counting', kind: 'escape', x: 0, z: 114, wanted: 4 },
+      { text: 'Escape to the airstrip — four stars and counting', kind: 'escape', x: 0, z: 114, wanted: 4, time: 120 },
     ],
   },
   {
@@ -94,7 +95,7 @@ export const MISSIONS = [
     intro: { who: 'BIGT', text: 'Last one, Jax. Tail the mayor\'s courier, then run for the airstrip with everything on you. Make it count — make us legends.' },
     stages: [
       { text: 'Tail the mayor\'s courier — stay within 25m for 12s', kind: 'follow', need: 12, range: 25 },
-      { text: 'Escape to the airstrip — four stars and counting', kind: 'escape', x: 0, z: 114, wanted: 4 },
+      { text: 'Escape to the airstrip — four stars and counting', kind: 'escape', x: 0, z: 114, wanted: 4, time: 120 },
     ],
   },
   {
@@ -114,7 +115,7 @@ export const MISSIONS = [
       { text: 'Pick up Dex at the garage', kind: 'point', x: -100, z: -30 },
       { text: 'Pick up Lena in Neon Mile', kind: 'point', x: 18, z: 18 },
       { text: 'Grab the crown — hold the floor for 3s', kind: 'grab', x: 100, z: 66, hold: 3 },
-      { text: 'Escape to the airstrip — five stars and counting', kind: 'escape', x: 0, z: 114, wanted: 5 },
+      { text: 'Escape to the airstrip — five stars and counting', kind: 'escape', x: 0, z: 114, wanted: 5, time: 150 },
     ],
   },
 ];
@@ -196,11 +197,14 @@ export function updateMissions(ms, dt, game, player) {
   } else { ms.beacon.visible = false; ms.ring.visible = false; }
   const d = t ? Math.hypot(player.x - t.x, player.z - t.z) : 999;
 
-  if (st.time && st.kind === 'point') {
+  // Timed stages count down in ms.timer for the HUD. Point and escape stages
+  // fail if the clock runs out; a wait stage just shows the time left to survive.
+  if (st.time && (st.kind === 'point' || st.kind === 'escape')) {
     if (ms.timer <= 0) ms.timer = st.time;
     ms.timer -= dt;
     if (ms.timer <= 0) return failMission(ms, game, 'Out of time — the job failed.');
   }
+  if (st.time && st.kind === 'wait') ms.timer = Math.max(0, st.time - ms.waitT);
   switch (st.kind) {
     case 'point':
     case 'escape':
@@ -247,9 +251,16 @@ export function updateMissions(ms, dt, game, player) {
 export function completeMission(ms, game) {
   const reward = MISSION_REWARDS[ms.active];
   game.player.money += reward;
-  game.addRep(250 + ms.active * 60);
+  game.addRep(300 + ms.active * 80);
   ms.done[ms.active] = true;
-  game.toast(`Mission complete! +$${reward}`);
+  // Weapons unlock the moment their mission is done — not only on the next
+  // load. Tell the player when a new gun opens up.
+  const before = game.weapons.slots.filter((s) => s.locked).map((s) => s.name);
+  unlockWeapons(game.weapons, ms.done);
+  const opened = game.weapons.slots.filter((s) => !s.locked && before.includes(s.name));
+  game.toast(opened.length > 0
+    ? `Mission complete! +$${reward} — ${opened.join(' + ')} unlocked!`
+    : `Mission complete! +$${reward}`);
   say(ms, 'MARA', `Clean work, Jax. $${reward} is yours. The crew is talking about you.`, 6);
   if (ms.targetCar) { ms.targetCar.mode = 'traffic'; ms.targetCar = null; }
   game.setHeli(false);

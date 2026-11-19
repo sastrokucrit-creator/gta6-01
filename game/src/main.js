@@ -14,6 +14,7 @@ import { createHeli, updateHeli } from './heli.js';
 import { MISSIONS, createMissionState, startMission, updateMissions, missionTarget, nextMission } from './missions.js';
 import { createCombat, punch, shoot, updateCombat } from './combat.js';
 import { createWeapons, currentWeapon, selectWeapon, unlockWeapons, spendAmmo, refillAmmo } from './weapons.js';
+import { createCrew, useCrewAbility, tickCrew } from './crew.js';
 import { createRadio, nextStation, updateRadio, radioLabel } from './radio.js';
 import { createAudio } from './audio.js';
 import { initHud, updateHud, toast } from './hud.js';
@@ -30,6 +31,7 @@ const duskParam = params.get('dusk') === '1' || shot === 'dusk';
 
 const canvas = document.getElementById('game');
 const status = document.getElementById('status');
+initInput(canvas); // keyboard + mouse look: without this no key ever reaches the game
 const rng = makeRng(seed);
 
 // --- Scene ---
@@ -72,6 +74,7 @@ const heli = createHeli(scene);
 const missions = createMissionState(scene);
 const combat = createCombat(scene);
 const weapons = createWeapons();
+const crew = createCrew();
 const radio = createRadio();
 const audio = createAudio();
 
@@ -98,7 +101,7 @@ const garagePos = { x: -100, z: -30 };
 
 // --- Game object (what HUD, missions and shots talk to) ---
 const game = {
-  player, traffic, parked, peds, wanted, heli, missions, weapons, radio,
+  player, traffic, parked, peds, wanted, heli, missions, weapons, crew, radio,
   missionDefs: MISSIONS,
   clockMinutes: 9 * 60, day: 1, time: 0,
   armed: false, dusk: false,
@@ -226,6 +229,7 @@ const game = {
     player.mesh.position.set(18, 0, 18);
     clearWanted(wanted, scene);
     heli.active = false;
+    crew.cd = [0, 0, 0]; crew.eyes = 0;
     missions.active = -1; missions.stage = 0; missions.done.fill(false);
     missions.dialog = null; missions.dialogT = 0;
     if (missions.targetCar) { scene.remove(missions.targetCar.mesh); missions.targetCar = null; }
@@ -257,6 +261,8 @@ const game = {
     updateMissions(missions, dt, game, player);
     // Combat timers.
     updateCombat(combat, dt);
+    // Crew ability cooldowns + Eyes Out clock.
+    tickCrew(crew, dt);
     // Radio.
     updateRadio(radio, dt);
     // Collisions.
@@ -308,10 +314,14 @@ function onWasted() {
 
 function handleCollisions(dt) {
   const p = player;
-  // Player car vs other cars.
+  // Player car vs other cars. The mission target car is in the list too, so
+  // ramming it during a ram stage actually lands — before this fix the target
+  // was never collided with and the "ram 3 times" path could never fire.
   if (p.inCar) {
     const car = p.inCar;
-    for (const other of [...traffic, ...parked, ...wanted.police, ...wanted.roadblock]) {
+    const others = [...traffic, ...parked, ...wanted.police, ...wanted.roadblock];
+    if (missions.targetCar) others.push(missions.targetCar);
+    for (const other of others) {
       if (other === car) continue;
       const d = Math.hypot(other.x - car.x, other.z - car.z);
       if (d < 3.8 && d > 0.01) {
@@ -401,6 +411,10 @@ function handleInput() {
     toast(`♪ ${label}`);
     audio.startMusic(radio.station);
   }
+  // Crew abilities: Z Mara (lose a star), X Dex (repair the car), C Lena (reveal police).
+  if (edge('KeyZ')) useCrewAbility(game, 0);
+  if (edge('KeyX')) useCrewAbility(game, 1);
+  if (edge('KeyC')) useCrewAbility(game, 2);
   if (edge('KeyM')) {
     const id = nextMission(missions);
     if (missions.active < 0 && id >= 0) startMission(missions, id, game);

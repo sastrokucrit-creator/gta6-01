@@ -2,10 +2,11 @@
 // day+time / IN SIGHT (top-right), police response (mid-left), round minimap + district
 // (bottom-left), health/armour/REP (bottom-left), character dialogue with portrait
 // (bottom-centre), speedometer + car name + condition + radio + gear (bottom-right).
-import { HALF, ROAD_CENTERS, districtAt, MISSION_REWARDS } from './config.js';
+import { HALF, ROAD_CENTERS, districtAt, MISSION_REWARDS, chapterOf } from './config.js';
 import { SPEAKERS } from './missions.js';
 import { drawPortrait } from './portraits.js';
 import { weaponHud } from './weapons.js';
+import { crewHud } from './crew.js';
 import { unitList } from './wanted.js';
 import { radioLabel } from './radio.js';
 
@@ -25,23 +26,40 @@ function fmtClock(minutes) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
+// A mission countdown reads as minutes:seconds, like a race clock.
+function fmtTimer(seconds) {
+  const s = Math.max(0, Math.ceil(seconds));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+// Condition word for the car readout: 100% is pristine, a battered car is wrecked.
+function condWord(c) {
+  if (c >= 76) return 'PRISTINE';
+  if (c >= 51) return 'GOOD';
+  if (c >= 26) return 'DENTED';
+  return 'WRECKED';
+}
+
 export function updateHud(game) {
   const p = game.player;
   const ms = game.missions;
-  // Mission panel (top-left).
+  // Mission panel (top-left): chapter, mission, stage, timer, reward.
   const mt = $('mission');
   if (ms.active >= 0) {
     const m = game.missionDefs[ms.active];
     const st = m.stages[ms.stage];
     const next = game.missionDefs[ms.active + 1];
+    const ch = chapterOf(ms.active);
     mt.querySelector('.mtitle').textContent = `MISSION ${ms.active + 1}/12 · ${m.name.toUpperCase()}`;
+    mt.querySelector('.mchapter').textContent = `CH.${ch.num} · ${ch.name}`;
     mt.querySelector('.mobj').textContent = `STAGE ${ms.stage + 1}/${m.stages.length} — ${st.text}`;
     mt.querySelector('.mnext').textContent = next ? `NEXT: ${next.name}` : 'NEXT: — final job —';
-    mt.querySelector('.mtimer').textContent = ms.timer > 0 ? `⏱ ${Math.ceil(ms.timer)}s` : '';
+    mt.querySelector('.mtimer').textContent = ms.timer > 0 ? `⏱ ${fmtTimer(ms.timer)} LEFT` : '';
     mt.querySelector('.mreward').textContent = `REWARD $${MISSION_REWARDS[ms.active].toLocaleString('en-US')}`;
   } else {
     const nextId = game.nextMissionId();
     mt.querySelector('.mtitle').textContent = nextId >= 0 ? `MISSION ${nextId + 1}/12 READY` : 'ALL 12 MISSIONS DONE';
+    mt.querySelector('.mchapter').textContent = nextId >= 0 ? `CH.${chapterOf(nextId).num} · ${chapterOf(nextId).name}` : 'CH.4 · AZURA LEGEND — COMPLETE';
     mt.querySelector('.mobj').textContent = nextId >= 0 ? game.missionDefs[nextId].name : 'Free roam — Azura Bay is yours.';
     mt.querySelector('.mnext').textContent = nextId >= 0 ? 'Press M to start' : '';
     mt.querySelector('.mtimer').textContent = '';
@@ -49,17 +67,28 @@ export function updateHud(game) {
   }
   // Top-right.
   $('money').textContent = `$${p.money.toLocaleString('en-US')}`;
+  // Rank panel: letter grade, title and RP progress, right under the money.
+  const rep = game.repInfo();
+  $('ranktext').textContent = rep.maxed
+    ? `RANK ${rep.letter} · ${rep.title} — MAX`
+    : `RANK ${rep.letter} · ${rep.title} — ${rep.cur.toLocaleString('en-US')}/${rep.need.toLocaleString('en-US')} RP`;
+  $('rankfill').style.width = rep.maxed ? '100%' : `${Math.round((rep.cur / rep.need) * 100)}%`;
   const stars = $('wanted').children;
   for (let i = 0; i < stars.length; i++) stars[i].className = i < game.wanted.stars ? '' : 'off';
   $('weapons').innerHTML = weaponHud(game.weapons).map((s) =>
-    `<span class="${s.sel ? 'sel' : ''} ${s.locked ? 'locked' : ''}">${s.key} ${s.name} ${s.locked ? '🔒' : s.ammo}</span>`).join('');
+    `<span class="${s.sel ? 'sel' : ''} ${s.locked ? 'locked' : ''}">${s.key} ${s.name}${s.price > 0 ? ` $${s.price.toLocaleString('en-US')}` : ''} ${s.locked ? '🔒' : s.ammo}</span>`).join('');
   $('clock').textContent = `DAY ${game.day} · ${fmtClock(game.clockMinutes)}`;
   const sight = $('sight');
   if (game.wanted.stars > 0) {
     sight.style.display = 'block';
-    sight.textContent = game.wanted.seen ? '● IN SIGHT' : '○ HIDDEN';
+    const zone = game.wanted.stars >= 3 && game.wanted.seen ? ' — SEARCH ZONE FOLLOWS YOU' : '';
+    const eyes = game.crew.eyes > 0 ? '👁 EYES OUT · ' : '';
+    sight.textContent = game.wanted.seen ? `${eyes}● IN SIGHT${zone}` : `${eyes}○ HIDDEN`;
     sight.className = game.wanted.seen ? 'seen' : 'hidden';
   } else sight.style.display = 'none';
+  // Crew ability cards (mid-right): key, name, member, role, state.
+  $('abilities').innerHTML = crewHud(game.crew).map((a) =>
+    `<div class="ab ${a.ready ? 'ready' : 'cool'}"><span class="abkey">[${a.key}]</span> <b>${a.name}</b> <span class="abwho">· ${a.who} · ${a.role}</span><br><span class="abdesc">${a.desc}</span> — <span class="abstate">${a.ready ? 'READY' : `${a.cdLeft}s`}</span></div>`).join('');
   // Police response (mid-left): named units with distance + status, and a unit count
   // in the title so the heat reads at a glance.
   const pol = $('police');
@@ -82,7 +111,6 @@ export function updateHud(game) {
   $('hptext').textContent = Math.max(0, Math.round(p.health));
   $('armourfill').style.width = `${Math.max(0, p.armour)}%`;
   $('armtext').textContent = Math.max(0, Math.round(p.armour));
-  const rep = game.repInfo();
   $('rep').textContent = `REP ${rep.level} · ${rep.title} ${rep.maxed ? 'MAX' : `${rep.cur}/${rep.need}`}`;
   $('repbar').firstElementChild.style.width = rep.maxed ? '100%' : `${Math.round((rep.cur / rep.need) * 100)}%`;
   // District under minimap.
@@ -104,14 +132,19 @@ export function updateHud(game) {
     $('carname').textContent = p.inCar.name;
     $('condbar').style.display = 'block';
     const cf = $('condfill');
-    cf.style.width = `${Math.max(0, p.inCar.condition)}%`;
-    cf.style.background = p.inCar.condition > 50 ? '#37d67a' : p.inCar.condition > 25 ? '#ffd23e' : '#ff5a4e';
+    const cond = Math.max(0, Math.round(p.inCar.condition));
+    cf.style.width = `${cond}%`;
+    cf.style.background = cond > 50 ? '#37d67a' : cond > 25 ? '#ffd23e' : '#ff5a4e';
+    const ct = $('condtext');
+    ct.textContent = `CONDITION ${cond}% · ${condWord(cond)}`;
+    ct.style.color = cond > 50 ? '#7dff9a' : cond > 25 ? '#ffd23e' : '#ff5a4e';
     $('radio').textContent = `♪ ${radioLabel(game.radio)}`;
     $('gear').textContent = `GEAR ${p.inCar.speed > 0.5 ? 'D' : p.inCar.speed < -0.5 ? 'R' : 'N'} · ${game.radio.station + 1}/4 · press R`;
   } else {
     sp.style.display = 'none';
     $('carname').textContent = '';
     $('condbar').style.display = 'none';
+    $('condtext').textContent = '';
     $('radio').textContent = '';
     $('gear').textContent = '';
   }
@@ -160,6 +193,27 @@ function drawMinimap(game) {
   for (const car of game.parked) dot(car.x, car.z, '#9aa5ad', 2);
   for (const car of game.wanted.police) dot(car.x, car.z, '#3b82ff', 3);
   if (game.heli.active) dot(game.heli.x, game.heli.z, '#ff5a4e', 3);
+  // Search zone: while the police can see the player at 3+ stars — or while
+  // Lena's Eyes Out is running — a pulsing red circle follows the player on
+  // the map, and police dots get a white ring so they read at a glance.
+  const searching = (game.wanted.seen && game.wanted.stars >= 3) || game.crew.eyes > 0;
+  if (searching) {
+    const [px, py] = toMap(game.player.x, game.player.z);
+    const rr = 40 * scale * (1 + 0.07 * Math.sin(performance.now() / 280));
+    mapCtx.fillStyle = 'rgba(255,60,60,0.12)';
+    mapCtx.beginPath(); mapCtx.arc(px, py, rr, 0, Math.PI * 2); mapCtx.fill();
+    mapCtx.strokeStyle = 'rgba(255,60,60,0.95)';
+    mapCtx.lineWidth = 2;
+    mapCtx.beginPath(); mapCtx.arc(px, py, rr, 0, Math.PI * 2); mapCtx.stroke();
+  }
+  if (game.crew.eyes > 0) {
+    mapCtx.strokeStyle = '#ffffff';
+    mapCtx.lineWidth = 1.5;
+    for (const car of game.wanted.police) {
+      const [mx, my] = toMap(car.x, car.z);
+      mapCtx.beginPath(); mapCtx.arc(mx, my, 5.5, 0, Math.PI * 2); mapCtx.stroke();
+    }
+  }
   const t = game.missionTarget();
   if (t) {
     const [mx, my] = toMap(t.x, t.z);

@@ -2,6 +2,7 @@
 // (real traffic, peds, police, HUD) and steps it forward a fixed amount, so the frame is
 // what a short play session really looks like and the same seed always gives the same frame.
 import { STEP } from './config.js';
+import { unlockWeapons } from './weapons.js';
 
 const SIM_SECONDS = 2.5;
 
@@ -41,10 +42,15 @@ export function stageShot(name, game) {
   game.reset();
   const g = game;
   // Mid-game staging: the shots show a player who has already earned their
-  // keep — several jobs done, a fat wallet, a REP rank to match — so the HUD
-  // reads like a career in progress, not a fresh start.
-  g.player.money = 18500;
-  g.player.rep = 1200;
+  // keep — eleven jobs done, a fat wallet, a REP rank to match — so the HUD
+  // reads like a career in progress, not a fresh start. The money is the real
+  // sum of the first eleven payouts plus the starting cash ($81,300); the
+  // rank is the real REP for those jobs (WHEELMAN, A). Unlocking the weapons
+  // those jobs earned makes the weapon row read honestly too.
+  g.player.money = 81300;
+  g.player.rep = 3300;
+  g.missions.done = [true, true, true, true, true, true, true, true, true, true, true, false];
+  unlockWeapons(g.weapons, g.missions.done);
   if (name === 'chase') {
     // Cover: high-speed chase at golden hour, wanted 4, police + helicopter +
     // roadblock, full HUD. The low amber sun and warm haze do the cinematic work.
@@ -57,7 +63,7 @@ export function stageShot(name, game) {
     g.missions.dialog = { who: 'MARA', text: 'Lose that helicopter before you come near my garage!' };
     g.missions.dialogT = 99;
     const car = driveCar(g, 18, -48, 0, 24);
-    if (car) car.name = 'Comet GT';
+    if (car) { car.name = 'Comet GT'; car.condition = 62; }
     g.spawnPoliceNear(3, 12);
     // Busy street: pedestrians on both sidewalks and traffic in both lanes,
     // offset so the chase car threads between them instead of piling into them.
@@ -105,7 +111,7 @@ export function stageShot(name, game) {
     g.missions.dialog = { who: 'MARA', text: 'The hotel wants that package in 90 seconds. Don\'t get it wet!' };
     g.missions.dialogT = 99;
     const car = driveCar(g, 60, 66, Math.PI / 2, 14);
-    if (car) car.name = 'Coast Cruiser';
+    if (car) { car.name = 'Coast Cruiser'; car.condition = 78; }
     // Busy street: pedestrians on the sidewalks and traffic in both lanes.
     const missionPeds = [[80, 58.5], [95, 73.5], [70, 73.5], [105, 58.5]];
     missionPeds.forEach((s, i) => {
@@ -132,7 +138,10 @@ export function stageShot(name, game) {
     g.missions.dialog = { who: 'LENA', text: 'Sunset on the beach road. Even the cops look good in this light.' };
     g.missions.dialogT = 99;
     simulate(g, SIM_SECONDS);
-    if (car) car.speed = 18; // re-accelerate so the speedo reads like a drive, not a stall
+    // Re-set speed AND condition after the sim, like the other shots do with
+    // speed: the beach-road sim lets traffic and the closing police beat the
+    // car up, and the shot stages a lightly used car, not a wreck.
+    if (car) { car.speed = 18; car.condition = 88; }
     policeBehind(g, 14);
     return;
   }
