@@ -119,7 +119,7 @@ function makeLamp() {
   pole.position.y = 2.5; pole.castShadow = true;
   const bulb = new THREE.Mesh(
     new THREE.SphereGeometry(0.28, 8, 6),
-    new THREE.MeshLambertMaterial({ color: 0xfff2b0, emissive: 0x554400 }),
+    new THREE.MeshLambertMaterial({ color: 0xfff2b0, emissive: 0x887700 }),
   );
   bulb.position.y = 5.05;
   g.add(pole); g.add(bulb);

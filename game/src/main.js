@@ -64,9 +64,9 @@ scene.add(sunHalo);
 
 const city = buildCity(scene, rng);
 const player = createPlayer(scene, 18, 18);
-const traffic = spawnTraffic(scene, rng, 14);
-const parked = spawnParked(scene, rng, 10);
-const peds = spawnPeds(scene, rng, 22);
+const traffic = spawnTraffic(scene, rng, 18);
+const parked = spawnParked(scene, rng, 12);
+const peds = spawnPeds(scene, rng, 30);
 const wanted = createWanted();
 const heli = createHeli(scene);
 const missions = createMissionState(scene);
@@ -174,7 +174,7 @@ const game = {
     if (car.mode === 'traffic' && steal !== false) {
       addWanted(wanted, 1);
       player.rep += 10;
-      toast(`Car stolen — ${car.name}!`);
+      toast(`VEHICLE STOLEN: ${car.name}`);
       audio.chime();
     }
     car.mode = 'player';
@@ -267,7 +267,7 @@ const game = {
     }
     // Audio.
     if (audio.ctx) {
-      audio.engine(player.inCar ? Math.abs(player.inCar.speed) / 34 : 0, !!player.inCar);
+      audio.engine(player.inCar ? Math.abs(player.inCar.speed) / 40 : 0, !!player.inCar);
       audio.siren(wanted.stars > 0);
     }
   },
@@ -405,7 +405,7 @@ function handleInput() {
     const id = nextMission(missions);
     if (missions.active < 0 && id >= 0) startMission(missions, id, game);
     else if (missions.active >= 0) toast('Mission already active — finish it first!');
-    else toast('All 10 missions complete!');
+    else toast('All 12 missions complete!');
   }
   for (let i = 0; i < 4; i++) {
     if (edge(`Digit${i + 1}`)) {
@@ -440,7 +440,7 @@ function applySave(d) {
   player.armour = d.armour ?? 50;
   player.rep = d.rep ?? 0;
   player.x = d.x ?? 18; player.z = d.z ?? 18;
-  missions.done = d.done ?? [false, false, false, false, false, false, false, false, false, false];
+  missions.done = Array.from({ length: 12 }, (_, i) => !!(d.done && d.done[i]));
   game.clockMinutes = d.clock ?? 540;
   game.day = d.day ?? 1;
   radio.station = d.station ?? 0;

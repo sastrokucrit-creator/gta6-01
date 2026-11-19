@@ -43,7 +43,7 @@ export function stageShot(name, game) {
   // Mid-game staging: the shots show a player who has already earned their
   // keep — several jobs done, a fat wallet, a REP rank to match — so the HUD
   // reads like a career in progress, not a fresh start.
-  g.player.money = 12400;
+  g.player.money = 18500;
   g.player.rep = 1200;
   if (name === 'chase') {
     // Cover: high-speed chase at golden hour, wanted 4, police + helicopter +
@@ -52,7 +52,7 @@ export function stageShot(name, game) {
     g.clockMinutes = 18 * 60 + 32; // 18:32 — the clock must match the sunset sky
     g.setWanted(4);
     g.setHeli(true);
-    g.startMission(6);
+    g.startMission(11); // the finale: the panel reads MISSION 12/12 · THE AZURA CROWN
     g.missions.stage = 3; // escape stage, so the panel reads STAGE 4/4
     g.missions.dialog = { who: 'MARA', text: 'Lose that helicopter before you come near my garage!' };
     g.missions.dialogT = 99;
@@ -76,7 +76,7 @@ export function stageShot(name, game) {
     simulate(g, SIM_SECONDS);
     // Re-accelerate for the frame so the speedo reads like a chase, and put one
     // police car ahead of the player so its light bar is visible on screen.
-    if (car) { car.speed = 26; g.spawnPoliceAhead(30); }
+    if (car) { car.speed = 36; g.spawnPoliceAhead(30); }
     g.snapHeli(); // the heli's lerp lags a moving target — snap it into frame
     // Bigger, closer chopper for the cover: pull it in from 36m to ~24m ahead,
     // lower, and scale it up so the spotlight reads.
@@ -117,7 +117,7 @@ export function stageShot(name, game) {
     const mt1 = g.traffic[3];
     if (mt1) { mt1.x = 110; mt1.z = 62; mt1.angle = -Math.PI / 2; mt1.speed = 9; mt1.sync(); }
     simulate(g, 1.0);
-    if (car) car.speed = 14; // re-accelerate so the speedo reads like a drive, not a stall
+    if (car) car.speed = 16; // re-accelerate so the speedo reads like a drive, not a stall
     return;
   }
   if (name === 'dusk') {
@@ -132,7 +132,7 @@ export function stageShot(name, game) {
     g.missions.dialog = { who: 'LENA', text: 'Sunset on the beach road. Even the cops look good in this light.' };
     g.missions.dialogT = 99;
     simulate(g, SIM_SECONDS);
-    if (car) car.speed = 16; // re-accelerate so the speedo reads like a drive, not a stall
+    if (car) car.speed = 18; // re-accelerate so the speedo reads like a drive, not a stall
     policeBehind(g, 14);
     return;
   }

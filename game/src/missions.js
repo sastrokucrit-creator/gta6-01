@@ -1,5 +1,5 @@
-// Ten story jobs for Jax and the crew (Mara the fixer, Dex the driver, Lena the hacker,
-// Big T the muscle). Each mission is a chain of stages; the HUD shows MISSION X/7, the
+// Twelve story jobs for Jax and the crew (Mara the fixer, Dex the driver, Lena the hacker,
+// Big T the muscle). Each mission is a chain of stages; the HUD shows MISSION X/12, the
 // current stage (STAGE 1/4...), the objective and the NEXT job. Rewards pay cash + REP.
 import * as THREE from '../vendor/three.module.min.js';
 import { MISSION_REWARDS } from './config.js';
@@ -97,6 +97,26 @@ export const MISSIONS = [
       { text: 'Escape to the airstrip — four stars and counting', kind: 'escape', x: 0, z: 114, wanted: 4 },
     ],
   },
+  {
+    id: 10, name: 'Harbor Lights',
+    intro: { who: 'LENA', text: 'A courier left a package at Marina Walk, down by the south pier. Pick it up and bring it to the hideout — the harbor patrol watches the marina, so don\'t linger.' },
+    stages: [
+      { text: 'Steal any car (press E near one)', kind: 'steal' },
+      { text: 'Drive to the marina at Marina Walk', kind: 'point', x: 100, z: -122 },
+      { text: 'Grab the package — hold the zone for 3s', kind: 'grab', x: 100, z: -122, hold: 3 },
+      { text: 'Escape to the hideout with the heat on', kind: 'escape', x: 0, z: -30, wanted: 3 },
+    ],
+  },
+  {
+    id: 11, name: 'The Azura Crown',
+    intro: { who: 'MARA', text: 'One last job, and it\'s the biggest. The Crown of Azura is on display at the hotel — Dex and Lena are in. Pick them up, take the crown, and run for the airstrip with everything on you. Make us legends.' },
+    stages: [
+      { text: 'Pick up Dex at the garage', kind: 'point', x: -100, z: -30 },
+      { text: 'Pick up Lena in Neon Mile', kind: 'point', x: 18, z: 18 },
+      { text: 'Grab the crown — hold the floor for 3s', kind: 'grab', x: 100, z: 66, hold: 3 },
+      { text: 'Escape to the airstrip — five stars and counting', kind: 'escape', x: 0, z: 114, wanted: 5 },
+    ],
+  },
 ];
 
 export function createMissionState(scene) {
@@ -113,7 +133,7 @@ export function createMissionState(scene) {
   ring.visible = false;
   scene.add(ring);
   return {
-    active: -1, stage: 0, timer: 0, done: [false, false, false, false, false, false, false, false, false, false],
+    active: -1, stage: 0, timer: 0, done: [false, false, false, false, false, false, false, false, false, false, false, false],
     beacon, ring, targetCar: null, hits: 0, closeT: 0, holdT: 0, waitT: 0,
     dialog: null, dialogT: 0,
   };

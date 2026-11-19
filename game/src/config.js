@@ -15,15 +15,17 @@ export const PLAYER = {
   walkSpeed: 6, runSpeed: 10, jumpSpeed: 8.5, radius: 0.55, height: 1.8,
 };
 export const CAR = {
-  accel: 22, brake: 34, maxSpeed: 34, maxReverse: 10, steer: 1.9, grip: 8,
+  accel: 22, brake: 34, maxSpeed: 40, maxReverse: 10, steer: 1.9, grip: 8,
 };
 export const WANTED_MAX = 5;
 
-// Districts: 3x3 zones across the city (south row is the beachfront).
+// Districts: 3x3 zones across the city (south row is the beachfront, north row
+// holds the airstrip). All nine names are distinct so the minimap label always
+// tells the player somewhere new.
 export const DISTRICTS = [
   ['OLD PORT', 'DOCKLANDS', 'MARINA WALK'],
   ['PALM HEIGHTS', 'NEON MILE', 'CORAL ROW'],
-  ['SUNSET QUAY', 'PALM HEIGHTS', 'NEON MILE'],
+  ['SUNSET QUAY', 'THE AIRSTRIP', 'UPTOWN'],
 ];
 export function districtAt(x, z) {
   const col = Math.max(0, Math.min(2, Math.floor((x + HALF) / (HALF * 2 / 3))));
@@ -66,4 +68,4 @@ export function repRank(xp) {
   return { level: r + 1, title: REP_RANKS[r].title, cur: xp - REP_RANKS[r].xp, need: next ? next.xp - REP_RANKS[r].xp : 0, maxed: !next };
 }
 
-export const MISSION_REWARDS = [250, 400, 350, 500, 600, 700, 1500, 800, 900, 2000];
+export const MISSION_REWARDS = [250, 400, 350, 500, 600, 700, 1500, 800, 900, 2000, 2500, 3000];

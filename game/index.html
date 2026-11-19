@@ -35,6 +35,8 @@
   #police .ptitle { font-size: 14px; font-weight: bold; color: #7fb8ff; letter-spacing: 1px; }
   #police .unit { font-size: 13px; }
   #police .unit b { color: #ffd23e; }
+  /* Mid-top: roadblock warning banner */
+  #roadblock { position: absolute; top: 150px; left: 50%; transform: translateX(-50%); font-size: 17px; font-weight: bold; color: #ffd23e; background: rgba(120,0,0,.65); border: 1px solid #ff8a7a; border-radius: 8px; padding: 6px 14px; display: none; text-align: center; }
   /* Bottom-left: minimap + district + vitals + REP */
   #mapwrap { position: absolute; bottom: 12px; left: 12px; }
   #minimap { border: 2px solid rgba(255,255,255,.9); border-radius: 50%; background: #1c2733; box-shadow: 0 2px 10px rgba(0,0,0,.5); display: block; }
@@ -106,6 +108,7 @@
   </div>
   <div id="crosshair">＋</div>
   <div id="toast"></div>
+  <div id="roadblock"></div>
   <div id="hint">WASD move · SHIFT run · SPACE jump · E enter/steal car · F punch · CLICK shoot · 1-4 weapons · R radio · M mission · P pause · drag mouse to look</div>
 </div>
 <div id="menu">
@@ -113,7 +116,7 @@
   <h2>OPEN WORLD CRIME</h2>
   <p class="story">Sun, sea and stolen cars. Jax washed up in Azura Bay with empty pockets and a
   reputation to rebuild. Mara, the fixer who runs the docks, has work for anyone fast enough —
-  if the police don't catch you first. Ten jobs. One crew. No way back.</p>
+  if the police don't catch you first. Twelve jobs. One crew. No way back.</p>
   <button id="btnStart">START</button>
   <button id="btnContinue" class="secondary" style="display:none">CONTINUE</button>
   <div class="controls">WASD move · SHIFT run · SPACE jump · E enter / steal car · F punch · CLICK shoot<br>

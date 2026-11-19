@@ -6,7 +6,7 @@
 // The game: AZURA BAY, an original open-world crime game in sunny 3D — a coastal city with
 // procedural buildings, palms and beach; third-person walking and driving; stealable cars
 // (named models, taxis, condition); NPC traffic and pedestrians; a 5-star wanted system with
-// named police units, roadblocks and a searchlight helicopter; 7 story missions with stages
+// named police units, roadblocks and a searchlight helicopter; 12 story missions with stages
 // (a crew: Jax, Mara, Dex, Lena, Big T); 4 weapons; in-car radio with 4 original stations;
 // a dense HUD (mission panel, weapons, police response, round minimap + district, dialogue
 // with portraits, speedometer + car + radio, health/armour/REP); save/continue, a garage

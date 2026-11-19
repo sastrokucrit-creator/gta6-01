@@ -34,14 +34,14 @@ export function updateHud(game) {
     const m = game.missionDefs[ms.active];
     const st = m.stages[ms.stage];
     const next = game.missionDefs[ms.active + 1];
-    mt.querySelector('.mtitle').textContent = `MISSION ${ms.active + 1}/10 · ${m.name.toUpperCase()}`;
+    mt.querySelector('.mtitle').textContent = `MISSION ${ms.active + 1}/12 · ${m.name.toUpperCase()}`;
     mt.querySelector('.mobj').textContent = `STAGE ${ms.stage + 1}/${m.stages.length} — ${st.text}`;
     mt.querySelector('.mnext').textContent = next ? `NEXT: ${next.name}` : 'NEXT: — final job —';
     mt.querySelector('.mtimer').textContent = ms.timer > 0 ? `⏱ ${Math.ceil(ms.timer)}s` : '';
     mt.querySelector('.mreward').textContent = `REWARD $${MISSION_REWARDS[ms.active].toLocaleString('en-US')}`;
   } else {
     const nextId = game.nextMissionId();
-    mt.querySelector('.mtitle').textContent = nextId >= 0 ? `MISSION ${nextId + 1}/10 READY` : 'ALL 10 MISSIONS DONE';
+    mt.querySelector('.mtitle').textContent = nextId >= 0 ? `MISSION ${nextId + 1}/12 READY` : 'ALL 12 MISSIONS DONE';
     mt.querySelector('.mobj').textContent = nextId >= 0 ? game.missionDefs[nextId].name : 'Free roam — Azura Bay is yours.';
     mt.querySelector('.mnext').textContent = nextId >= 0 ? 'Press M to start' : '';
     mt.querySelector('.mtimer').textContent = '';
@@ -60,14 +60,23 @@ export function updateHud(game) {
     sight.textContent = game.wanted.seen ? '● IN SIGHT' : '○ HIDDEN';
     sight.className = game.wanted.seen ? 'seen' : 'hidden';
   } else sight.style.display = 'none';
-  // Police response (mid-left).
+  // Police response (mid-left): named units with distance + status, and a unit count
+  // in the title so the heat reads at a glance.
   const pol = $('police');
   if (game.wanted.stars > 0) {
     pol.style.display = 'block';
-    $('units').innerHTML = unitList(game.wanted).map((u) =>
+    const units = unitList(game.wanted);
+    $('police').querySelector('.ptitle').textContent = `AZURA PD RESPONSE · ${units.length} UNIT${units.length === 1 ? '' : 'S'}`;
+    $('units').innerHTML = units.map((u) =>
       `<div class="unit"><b>${u.name}</b> · ${u.dist}m · ${u.status}</div>`).join('') ||
       '<div class="unit">No units in range</div>';
   } else pol.style.display = 'none';
+  // Roadblock warning banner (top-centre): visible while a roadblock stands ahead.
+  const rb = $('roadblock');
+  if (game.wanted.stars >= 4 && game.wanted.roadblock.length > 0) {
+    rb.style.display = 'block';
+    rb.textContent = '⚠ ROADBLOCK AHEAD — smash through or go around!';
+  } else rb.style.display = 'none';
   // Vitals + REP (bottom-left).
   $('healthfill').style.width = `${Math.max(0, p.health)}%`;
   $('hptext').textContent = Math.max(0, Math.round(p.health));
