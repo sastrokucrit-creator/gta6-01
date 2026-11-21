@@ -1,4 +1,4 @@
-// Round 7: no gameplay change here — header written in-session so the file is witnessed.
+// Round 8: no gameplay change here — header written in-session so the file is witnessed.
 // Weapons: 5 slots (1 Fists, 2 Pistol, 3 SMG, 4 Shotgun, 5 REAPER). SMG unlocks after
 // mission 3, shotgun after mission 5, the REAPER after the final job. Ammo is shown in the
 // HUD; switching is instant (keys 1-5). Fists punch; the rest shoot hitscan with

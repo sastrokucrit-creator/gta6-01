@@ -15,16 +15,20 @@ const UNIT_NAMES = ['APD-1 "VULTURE"', 'APD-2 "HAMMER"', 'APD-3 "VIPER"', 'APD-4
 export const UNIT_ROLES = ['RAMMING', 'PURSUIT', 'FLANKING', 'CLOSING IN', 'RESPONDING', 'PURSUIT'];
 
 export function createWanted() {
-  return { stars: 0, heat: 0, quiet: 0, police: [], roadblock: [], roadblockT: 0, nearest: Infinity, seen: false, ghostT: 0, spawned: 0 };
+  return { stars: 0, heat: 0, quiet: 0, police: [], roadblock: [], roadblockT: 0, nearest: Infinity, seen: false, ghostT: 0, spawned: 0, crime: '' };
 }
 
-export function addWanted(w, n) {
+// Round 8: the wanted level now remembers WHAT it is for — the dispatch panel
+// names the crime (STOLEN VEHICLE, ARMED ASSAULT, EVADING POLICE...), so the
+// pursuit always has a charge, not just a star count.
+export function addWanted(w, n, crime) {
   w.stars = Math.min(WANTED_MAX, w.stars + n);
   w.quiet = 0;
+  if (crime) w.crime = crime;
 }
 
 export function clearWanted(w, scene) {
-  w.stars = 0; w.quiet = 0;
+  w.stars = 0; w.quiet = 0; w.crime = '';
   for (const c of w.police) scene.remove(c.mesh);
   w.police = [];
   clearRoadblock(w, scene);

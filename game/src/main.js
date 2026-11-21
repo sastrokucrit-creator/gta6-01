@@ -3,7 +3,7 @@
 // the city; ?shot=chase|mission|foot|dusk stages that scene, paints it a few times and
 // sets window.__shotReady for a screenshot. ?dusk=1 forces sunset lighting.
 import * as THREE from '../vendor/three.module.min.js';
-import { STEP, HALF, ROAD_CENTERS, CAR, repRank } from './config.js';
+import { STEP, HALF, ROAD_CENTERS, CAR, repRank, districtAt } from './config.js';
 import { makeRng } from './rng.js';
 import { buildCity, hitsBuilding } from './city.js';
 import { spawnTraffic, spawnParked, spawnPolice, updateTraffic, updatePolice, updateTarget, makeCarMesh, Car, POLICE_COLOR } from './vehicles.js';
@@ -12,6 +12,7 @@ import { createPlayer, updateFoot, updateDrive } from './player.js';
 import { createWanted, addWanted, clearWanted, updateWanted, clearRoadblock, UNIT_ROLES } from './wanted.js';
 import { createHeli, updateHeli } from './heli.js';
 import { MISSIONS, DISPATCH_LINES, createMissionState, startMission, updateMissions, missionTarget, nextMission } from './missions.js';
+import { createStanding, bumpStanding, districtStanding } from './standing.js';
 import { createCombat, punch, shoot, updateCombat } from './combat.js';
 import { createWeapons, currentWeapon, selectWeapon, unlockWeapons, spendAmmo, refillAmmo, lockInfo } from './weapons.js';
 import { createCrew, useCrew, updateCrew } from './crew.js';
@@ -71,6 +72,7 @@ const peds = spawnPeds(scene, rng, 30);
 const wanted = createWanted();
 const heli = createHeli(scene);
 const missions = createMissionState(scene);
+const standing = createStanding(); // round 8: street standing, one value per district
 const combat = createCombat(scene);
 const weapons = createWeapons();
 const crew = createCrew();
@@ -104,6 +106,7 @@ const garagePos = { x: -100, z: -30 };
 // --- Game object (what HUD, missions and shots talk to) ---
 const game = {
   player, traffic, parked, peds, wanted, heli, missions, weapons, crew, radio, combat,
+  standing,
   missionDefs: MISSIONS,
   clockMinutes: 9 * 60, day: 1, time: 0,
   armed: false, dusk: false,
@@ -112,8 +115,12 @@ const game = {
   nextMissionId: () => nextMission(missions),
   repInfo: () => repRank(player.rep),
   addRep(xp) { player.rep += xp; },
-  setWanted(n) { wanted.stars = Math.max(wanted.stars, n); wanted.quiet = 0; },
-  clearWantedSoft() { wanted.stars = 0; wanted.quiet = 0; },
+  // Round 8: standing moves through here so missions and the heat both speak
+  // to the same ledger; standingHere() is what the HUD reads.
+  addStanding(district, delta) { bumpStanding(game.standing, district, delta); },
+  standingHere() { return districtStanding(game.standing, player.x, player.z); },
+  setWanted(n, crime) { wanted.stars = Math.max(wanted.stars, n); wanted.quiet = 0; if (crime) wanted.crime = crime; },
+  clearWantedSoft() { wanted.stars = 0; wanted.quiet = 0; wanted.crime = ''; },
   setHeli(on) { heli.active = on; },
   // Snap the helicopter to its hover spot instantly (the normal update lerps toward
   // a moving target and lags far behind after a staged sim — for a screenshot the
@@ -180,7 +187,7 @@ const game = {
   enterCar(car, steal) {
     if (car.mode === 'target' || car.mode === 'police' || car.mode === 'roadblock') return false;
     if (car.mode === 'traffic' && steal !== false) {
-      addWanted(wanted, 1);
+      addWanted(wanted, 1, 'STOLEN VEHICLE');
       player.rep += 10;
       toast(`VEHICLE STOLEN: ${car.name}`);
       audio.chime();
@@ -238,6 +245,7 @@ const game = {
     for (const s of crew.slots) s.cd = 0;
     missions.active = -1; missions.stage = 0; missions.done.fill(false);
     missions.dialog = null; missions.dialogT = 0; missions.dialogQueue = [];
+    game.standing = createStanding(); // round 8: a fresh career starts NEUTRAL everywhere
     game._prevStars = 0; game._dispatchT = -99; // dispatch voice resets with the run
     if (missions.targetCar) { scene.remove(missions.targetCar.mesh); missions.targetCar = null; }
     game.clockMinutes = 9 * 60; game.day = 1;
@@ -265,7 +273,10 @@ const game = {
     // Azura PD dispatch voice: when the heat rises and no dialogue is showing,
     // Sgt. Reyes cuts in on the radio — at most one line per 20 s, so he never
     // talks over a mission briefing or another dispatch call.
+    // Round 8: heat costs standing where it rises — the locals go cold when
+    // the sirens come to their street (-4 in this district, once per rise).
     if (wanted.stars > (game._prevStars ?? 0)) {
+      bumpStanding(game.standing, districtAt(player.x, player.z), -4);
       if (missions.dialogT <= 0 && game.time - (game._dispatchT ?? -99) > 20) {
         say(missions, 'DISPATCH', DISPATCH_LINES[wanted.stars] || DISPATCH_LINES[1], 6);
         audio.squelch();
@@ -415,7 +426,7 @@ function handleInput() {
     }
   }
   if (edgePressed('KeyF') && !player.inCar) {
-    if (punch(player, peds, () => { addWanted(wanted, 1); audio.punch(); })) { /* hit */ }
+    if (punch(player, peds, () => { addWanted(wanted, 1, 'ASSAULT'); audio.punch(); })) { /* hit */ }
   }
   if (edgePressed('KeyR') && player.inCar) {
     const label = nextStation(radio);
@@ -440,10 +451,10 @@ function handleInput() {
   }
   if (consumeClick() && !player.inCar) {
     const w = currentWeapon(weapons);
-    if (w.name === 'FISTS') punch(player, peds, () => { addWanted(wanted, 1); audio.punch(); });
+    if (w.name === 'FISTS') punch(player, peds, () => { addWanted(wanted, 1, 'ASSAULT'); audio.punch(); });
     else if (spendAmmo(weapons)) {
       shoot(player, combat, w, peds, [...traffic, ...parked], wanted.police, (hit) => {
-        addWanted(wanted, 1);
+        addWanted(wanted, 1, 'ARMED ASSAULT');
         audio.gunshot();
         game._scared = true;
         if (hit.kind === 'ped') player.rep += 2;
@@ -469,6 +480,8 @@ function applySave(d) {
   game.clockMinutes = d.clock ?? 540;
   game.day = d.day ?? 1;
   radio.station = d.station ?? 0;
+  // Round 8: standing loads with the career; an older save without it starts NEUTRAL.
+  game.standing = d.standing ? { ...createStanding(), ...d.standing } : createStanding();
   unlockWeapons(weapons, missions.done);
   player.mesh.position.set(player.x, 0, player.z);
 }

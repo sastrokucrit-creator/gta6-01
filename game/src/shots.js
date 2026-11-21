@@ -2,6 +2,7 @@
 // (real traffic, peds, police, HUD) and steps it forward a fixed amount, so the frame is
 // what a short play session really looks like and the same seed always gives the same frame.
 import { STEP } from './config.js';
+import { applyCarModel } from './vehicles.js';
 
 const SIM_SECONDS = 2.5;
 
@@ -62,12 +63,18 @@ export function stageShot(name, game) {
   // from the first eleven jobs); the REP is the total after those jobs.
   g.player.money = 87000;
   g.player.rep = 6050;
+  // Round 8: the staged player is known on the streets — standing is seeded
+  // to mid-career values (a few districts warm, one wary), so every shot
+  // shows the standing bar as a lived-in career reads it, not a flat 50.
+  const seedStanding = { 'OLD PORT': 45, 'DOCKLANDS': 72, 'MARINA WALK': 58, 'PALM HEIGHTS': 64, 'NEON MILE': 81, 'CORAL ROW': 58, 'SUNSET QUAY': 52, 'THE AIRSTRIP': 47, 'UPTOWN': 55 };
+  for (const [d, v] of Object.entries(seedStanding)) if (g.standing[d] !== undefined) g.standing[d] = v;
   if (name === 'chase') {
     // Cover: high-speed chase at golden hour, wanted 4, police + helicopter +
     // roadblock, full HUD. The low amber sun and warm haze do the cinematic work.
     g.setDusk(true);
     g.clockMinutes = 18 * 60 + 32; // 18:32 — the clock must match the sunset sky
-    g.setWanted(4);
+    g.day = 3; // round 8: the cover is day three of the campaign, not day one
+    g.setWanted(4, 'GRAND THEFT AUTO');
     g.setHeli(true);
     g.startMission(11); // the finale: the panel reads MISSION 12/12 · THE AZURA CROWN
     g.missions.stage = 3; // escape stage, so the panel reads STAGE 4/4
@@ -76,7 +83,7 @@ export function stageShot(name, game) {
     g.missions.dialog = { who: 'DISPATCH', text: 'Roadblock going up ahead on Coral Row. All units converge.' };
     g.missions.dialogT = 99;
     const car = driveCar(g, 18, -48, 0, 24, [g.traffic[2], g.traffic[3], g.traffic[4]]);
-    if (car) car.name = 'Comet GT';
+    if (car) applyCarModel(car, 'Comet GT');
     g.spawnPoliceNear(3, 12);
     // Busy street: pedestrians on both sidewalks and traffic in both lanes,
     // offset so the chase car threads between them instead of piling into them.
@@ -125,8 +132,9 @@ export function stageShot(name, game) {
     g.missions.stage = 1; // delivery leg
     g.missions.dialog = { who: 'MARA', text: 'The Palm Court Hotel wants that package in 90 seconds. Don\'t get it wet!' };
     g.missions.dialogT = 99;
+    g.day = 2;
     const car = driveCar(g, 60, 66, Math.PI / 2, 14, [g.traffic[2], g.traffic[3]]);
-    if (car) car.name = 'Coast Cruiser';
+    if (car) applyCarModel(car, 'Coast Cruiser');
     // Busy street: pedestrians on the sidewalks and traffic in both lanes.
     const missionPeds = [[80, 58.5], [95, 73.5], [70, 73.5], [105, 58.5]];
     missionPeds.forEach((s, i) => {
@@ -146,10 +154,11 @@ export function stageShot(name, game) {
     // the sea — palms, pier and sunset over the water ahead, wanted 1.
     g.setDusk(true);
     g.clockMinutes = 18 * 60 + 30; // 18:30 — the clock must match the sunset sky
-    g.setWanted(1);
+    g.day = 3;
+    g.setWanted(1, 'STOLEN VEHICLE');
     g.radio.station = 3;
     const car = driveCar(g, -78, -70, Math.PI, 16);
-    if (car) car.name = 'Palm Runner';
+    if (car) applyCarModel(car, 'Palm Runner');
     g.missions.dialog = { who: 'LENA', text: 'Sunset on the beach road. Sunset Boulevard could never look this good.' };
     g.missions.dialogT = 99;
     simulate(g, SIM_SECONDS);
@@ -159,6 +168,7 @@ export function stageShot(name, game) {
   }
   // Default: foot — on foot in Neon Mile, peds, taxis, mission ready.
   g.teleportPlayer(18, 18, Math.PI);
+  g.day = 2;
   g.missions.dialog = { who: 'DEX', text: 'Nice day for a walk, Jax. The Neon Arch is just up Neon Avenue — the city is yours, if you can take it.' };
   g.missions.dialogT = 99;
   // Pull six pedestrians onto the sidewalks ahead of the player so the shot shows

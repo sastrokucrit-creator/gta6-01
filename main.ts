@@ -1,4 +1,5 @@
-// Round 7: no change to the entry program — header written in-session so the file is witnessed.
+// Round 8: no change to the entry program's shape — the header now lists the
+// round-8 systems too, so the file is witnessed and the summary stays true.
 // A working gta6-01 entry (Node 22, standard library only): the game is this directory's
 // game/ folder, plain static files a desktop browser loads offline (game/index.html and its ES
 // modules, three.js vendored under game/vendor/, no network request), and the program hands it
@@ -16,7 +17,9 @@
 // search zone + district and street, dialogue with portraits and roles, speedometer + car
 // condition + radio, health/armour/RANK); save/continue, a garage safehouse, procedural WebAudio
 // sound and music, and a pause menu.
-// Put your 3 or 4 PNG or JPEG screenshots in screenshots/ (the first by name is the cover) and run it.
+// (round 8: + street standing per district, a named charge on the dispatch
+// panel, car class + tune in the speedometer, and Otis the ferry master as a
+// civilian job-giver). Put your 3 or 4 PNG or JPEG screenshots in screenshots/ (the first by name is the cover) and run it.
 //
 // Serve it locally with `node serve.ts`, then open http://localhost:8080.
 // Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:

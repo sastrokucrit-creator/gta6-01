@@ -1,4 +1,4 @@
-// Round 7: no gameplay change here — header written in-session so the file is witnessed.
+// Round 8: no gameplay change here — header written in-session so the file is witnessed.
 // Procedural sound: WebAudio only, no audio files. Engine hum, police siren, gunshot,
 // punch thud, pickup chime and a simple bassline music loop. Everything is guarded so a
 // missing or suspended AudioContext never breaks the game (headless screenshots included).

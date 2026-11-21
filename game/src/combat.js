@@ -1,4 +1,4 @@
-// Round 7: no gameplay change here — header written in-session so the file is witnessed.
+// Round 8: no gameplay change here — header written in-session so the file is witnessed.
 // Combat: punch (F) knocks a nearby pedestrian down; shoot (click) fires a hitscan ray
 // with the current weapon's damage, rate and range, plus a tracer line and muzzle flash.
 // Shooting and punching raise the wanted level. Cars take damage and lose condition.

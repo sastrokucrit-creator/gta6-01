@@ -120,6 +120,26 @@ export function repRank(xp) {
   return { level: r + 1, title: REP_RANKS[r].title, cur: xp - REP_RANKS[r].xp, need: next ? next.xp - REP_RANKS[r].xp : 0, maxed: !next };
 }
 
+// Car class + tune (round 8): every model has a body class and a tune level,
+// so the speedometer can say what the car IS, not just its name — a Comet GT
+// is a SPORTS car at TUNE 3, a Bay Breeze is a SEDAN at TUNE 1.
+export const CAR_INFO = {
+  'Comet GT': { cls: 'SPORTS', tune: 3 },
+  'Coast Cruiser': { cls: 'CRUISER', tune: 2 },
+  'Dune Runner': { cls: 'OFF-ROAD', tune: 2 },
+  'Street Hawk': { cls: 'SPORTS', tune: 2 },
+  'Vulture': { cls: 'MUSCLE', tune: 2 },
+  'Palm Runner': { cls: 'CONVERTIBLE', tune: 2 },
+  'Bay Breeze': { cls: 'SEDAN', tune: 1 },
+  'Night Fox': { cls: 'SPORTS', tune: 3 },
+  'Turbo Ray': { cls: 'SUPER', tune: 3 },
+  'Azura Cab': { cls: 'CAB', tune: 1 },
+  'Blue Sedan': { cls: 'SEDAN', tune: 1 },
+  'APD Interceptor': { cls: 'INTERCEPTOR', tune: 2 },
+  'APD Roadblock': { cls: 'INTERCEPTOR', tune: 2 },
+};
+export function carInfo(name) { return CAR_INFO[name] || { cls: 'SEDAN', tune: 1 }; }
+
 // Mission payouts: the jobs pay like a career, not pocket money. The first
 // eleven jobs total $85,000 on top of the $2,000 Jax starts with, so the crew
 // walks into the finale holding $87,000 — and the crown itself pays $60,000.

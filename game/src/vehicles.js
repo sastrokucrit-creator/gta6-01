@@ -3,7 +3,7 @@
 // road lanes and turns at intersections; police cars chase the player. Parked cars line the
 // roads and can be stolen. Every car has an original model name and a condition bar (100 = new).
 import * as THREE from '../vendor/three.module.min.js';
-import { CAR_NAMES, HALF, ROAD_CENTERS, TAXI_NAME } from './config.js';
+import { CAR_NAMES, carInfo, HALF, ROAD_CENTERS, TAXI_NAME } from './config.js';
 import { pick, range } from './rng.js';
 import { nearestRoadCenter } from './city.js';
 
@@ -55,6 +55,15 @@ export function makeCarMesh(color, police = false, taxi = false) {
 }
 
 // A car in the world. mode: 'parked' | 'traffic' | 'player' | 'police' | 'target'
+// Round 8: a car's model carries its class + tune with it — set them together
+// here so a rename can never leave the HUD showing the wrong car.
+export function applyCarModel(car, name) {
+  car.name = name || 'Comet GT';
+  const info = carInfo(car.name);
+  car.cls = info.cls;
+  car.tune = info.tune;
+}
+
 export class Car {
   constructor(mesh, x, z, angle, mode, name) {
     this.mesh = mesh;
@@ -66,7 +75,7 @@ export class Car {
     this.targetSpeed = 0;
     this.turnAt = 0;
     this.flash = 0;
-    this.name = name || 'Comet GT';
+    applyCarModel(this, name);
     this.condition = 100;
     this.taxi = false;
     this._role = null; // police dispatch role (RAMMING / PURSUIT / FLANKING / ...), set at spawn

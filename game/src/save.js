@@ -16,6 +16,7 @@ export function saveGame(game) {
       clock: game.clockMinutes,
       day: game.day,
       station: game.radio.station,
+      standing: game.standing, // round 8: district standing saves with the career
     };
     window.localStorage.setItem(SAVE_KEY, JSON.stringify(data));
   } catch {}

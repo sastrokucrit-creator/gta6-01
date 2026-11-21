@@ -92,6 +92,9 @@ export function updateHud(game) {
     pol.style.display = 'block';
     const units = unitList(game.wanted, game.heli, p.x, p.z);
     $('police').querySelector('.ptitle').textContent = `AZURA PD DISPATCH · ${units.length} UNIT${units.length === 1 ? '' : 'S'}`;
+    // Round 8: the panel names the charge — the pursuit always has a reason,
+    // not just a star count. Empty when the heat came up with no recorded crime.
+    $('pcrime').textContent = game.wanted.crime ? `WANTED FOR: ${game.wanted.crime}` : '';
     const nearest = units.length ? units.reduce((b, u) => (u.dist < b.dist ? u : b)) : null;
     $('pnearest').textContent = nearest ? `NEAREST: ${nearest.name} · ${nearest.dist}m` : '';
     $('units').innerHTML = units.map((u) =>
@@ -114,7 +117,14 @@ export function updateHud(game) {
   $('rep').textContent = `RANK ${rep.level} · ${rep.title} ${rep.maxed ? 'MAX' : `${rep.cur}/${rep.need} RP`}`;
   $('repbar').firstElementChild.style.width = rep.maxed ? '100%' : `${Math.round((rep.cur / rep.need) * 100)}%`;
   // District + street under minimap: the player always knows the exact road.
+  // Round 8: standing rides under it — the word and the bar for THIS district,
+  // so the player always knows where they are welcome and where they are not.
   $('district').textContent = `${districtAt(p.x, p.z)} · ${p.street || streetAt(p.x, p.z)}`;
+  const st = game.standingHere ? game.standingHere() : null;
+  if (st) {
+    $('standing').textContent = `STANDING · ${st.label} ${st.value}`;
+    $('standingfill').style.width = `${st.value}%`;
+  }
   // Dialogue (bottom-centre) with portrait: name · role, so every voice is
   // introduced, not just named.
   const dlg = $('dialog');
@@ -130,7 +140,8 @@ export function updateHud(game) {
   if (p.inCar) {
     sp.style.display = 'block';
     sp.innerHTML = `${Math.round(Math.abs(p.inCar.speed) * 3.6)} <small>km/h</small>`;
-    $('carname').textContent = p.inCar.name;
+    // Round 8: the car reads as a car — name · class · tune level.
+    $('carname').textContent = `${p.inCar.name} · ${p.inCar.cls || 'SEDAN'} · TUNE ${p.inCar.tune || 1}`;
     $('condbar').style.display = 'block';
     const cf = $('condfill');
     cf.style.width = `${Math.max(0, p.inCar.condition)}%`;

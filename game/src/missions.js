@@ -13,7 +13,7 @@
 // the next line the moment the current one ends, so an exchange never overlaps the
 // dispatch voice (which only cuts in when no dialogue is showing).
 import * as THREE from '../vendor/three.module.min.js';
-import { MISSION_REWARDS } from './config.js';
+import { MISSION_REWARDS, districtAt } from './config.js';
 import { unlockWeapons } from './weapons.js';
 
 export const SPEAKERS = {
@@ -23,6 +23,9 @@ export const SPEAKERS = {
   LENA: { name: 'LENA', role: 'Hacker · Lookout', initial: 'L', color: '#8e44ad' },
   BIGT: { name: 'BIG T', role: 'Muscle', initial: 'T', color: '#27ae60' },
   DISPATCH: { name: 'SGT. REYES', role: 'AZURA PD DISPATCH', initial: 'R', color: '#3b82ff' },
+  // Round 8: the crew is not the only voice in the bay — Otis runs the dawn
+  // ferry out of Pier 9, and he is the one who hands Jax the ferry job.
+  OTIS: { name: 'OTIS', role: 'Ferry Master · The Harbor', initial: 'O', color: '#b8860b' },
 };
 
 // What Sgt. Reyes says on the radio when the heat rises — one line per wanted
@@ -157,8 +160,9 @@ export const MISSIONS = [
   {
     id: 8, name: 'The Ferry Job',
     intro: [
-      { who: 'LENA', text: 'A ferry leaves Pier 9 at dawn with a car the crew needs. Steal a ride and deliver it to the pier — quiet, no heat.' },
+      { who: 'OTIS', text: "You must be Jax. The dawn ferry leaves Pier 9 with a car the crew needs — steal a ride and bring it to the pier before first light. Quiet, no heat." },
       { who: 'JAX', text: 'A car for a ferry. Quiet, no heat. I can do quiet.' },
+      { who: 'LENA', text: "The ferry casts off at first light, Jax. Otis is counting on us — don't keep him waiting." },
     ],
     stages: [
       { text: 'Steal any car (press E near one)', kind: 'steal' },
@@ -259,7 +263,7 @@ export function startMission(ms, id, game) {
     game.spawnTargetCar(m.stages.some((s) => s.kind === 'ram') ? 'flee' : 'loop');
   }
   const st = m.stages[0];
-  if (st && st.wanted) game.setWanted(st.wanted);
+  if (st && st.wanted) game.setWanted(st.wanted, 'EVADING POLICE');
   if (st && st.heli) game.setHeli(true);
 }
 
@@ -278,9 +282,12 @@ function advanceStage(ms, game) {
   ms.stage++;
   ms.closeT = 0; ms.holdT = 0; ms.waitT = 0; ms.timer = 0;
   const m = MISSIONS[ms.active];
+  // Round 8: the streets notice when a stage lands — +3 standing in the
+  // district where the stage just closed (the player is standing there).
+  if (game.addStanding) game.addStanding(districtAt(game.player.x, game.player.z), 3);
   if (ms.stage >= m.stages.length) return completeMission(ms, game);
   const st = m.stages[ms.stage];
-  if (st.wanted) game.setWanted(st.wanted);
+  if (st.wanted) game.setWanted(st.wanted, 'EVADING POLICE');
   if (st.heli) game.setHeli(true);
   // A stage with its own line speaks it (the crew member the stage belongs
   // to, naming the venue); otherwise the stage-advance voice rotates by what
@@ -369,6 +376,8 @@ export function completeMission(ms, game) {
   game.player.money += reward;
   game.addRep(250 + ms.active * 60);
   ms.done[ms.active] = true;
+  // Round 8: a finished job pays in standing too — +5 where the job paid out.
+  if (game.addStanding) game.addStanding(districtAt(game.player.x, game.player.z), 5);
   // A gun unlocks the moment the job that earns it is done — not on the next
   // load. A weapon earned mid-session must be selectable mid-session.
   unlockWeapons(game.weapons, ms.done);

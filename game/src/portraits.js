@@ -3,11 +3,11 @@
 // Drawn character portraits for the dialogue box: each crew member gets a small
 // stylized face (skin, hair, one signature accessory) on a 56x56 canvas, so the
 // speaker reads as a person, not a letter. Drawn fresh each time dialogue shows.
-const SKIN = { MARA: '#f2c19b', JAX: '#e8b98a', DEX: '#c98d5f', LENA: '#f6d3b3', BIGT: '#8a5a3b', DISPATCH: '#d9a06b' };
+const SKIN = { MARA: '#f2c19b', JAX: '#e8b98a', DEX: '#c98d5f', LENA: '#f6d3b3', BIGT: '#8a5a3b', DISPATCH: '#d9a06b', OTIS: '#d9a06b' };
 // Ring colour per speaker (mirrors SPEAKERS in missions.js): the dialogue
 // portrait wears a thin ring in its speaker's colour, so the voice reads
 // at a glance — blue for the dispatch.
-const COLORS = { MARA: '#c0392b', JAX: '#d94f3d', DEX: '#2980b9', LENA: '#8e44ad', BIGT: '#27ae60', DISPATCH: '#3b82ff' };
+const COLORS = { MARA: '#c0392b', JAX: '#d94f3d', DEX: '#2980b9', LENA: '#8e44ad', BIGT: '#27ae60', DISPATCH: '#3b82ff', OTIS: '#b8860b' };
 
 function base(ctx, who) {
   // Background disc in the speaker's colour, then the face.
@@ -117,7 +117,19 @@ function drawDispatch(ctx) {
   mouth(ctx, 41, false);
 }
 
-const DRAW = { MARA: drawMara, JAX: drawJax, DEX: drawDex, LENA: drawLena, BIGT: drawBigt, DISPATCH: drawDispatch };
+function drawOtis(ctx) {
+  base(ctx, 'OTIS');
+  // Round 8: flat harbour cap + grey beard — the old ferry master.
+  ctx.fillStyle = '#5a4632';
+  ctx.beginPath(); ctx.ellipse(28, 19, 15.5, 8, 0, Math.PI, Math.PI * 2); ctx.fill();
+  ctx.fillRect(12, 17, 32, 4); // cap brim
+  ctx.fillStyle = '#cfcfcf';
+  ctx.beginPath(); ctx.ellipse(28, 43, 11, 7, 0, 0, Math.PI); ctx.fill(); // grey beard
+  eyes(ctx, 30, 6);
+  mouth(ctx, 41, true);
+}
+
+const DRAW = { MARA: drawMara, JAX: drawJax, DEX: drawDex, LENA: drawLena, BIGT: drawBigt, DISPATCH: drawDispatch, OTIS: drawOtis };
 
 export function drawPortrait(canvas, who) {
   const ctx = canvas.getContext('2d');
