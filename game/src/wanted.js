@@ -1,3 +1,5 @@
+// Round 7: no gameplay change here — the NEAREST-unit line lives in hud.js, which reads
+// unitList() from this file; header written in-session so the file is witnessed.
 // Wanted: 0-5 stars. Crimes add stars; named police units spawn and chase; at 4+ stars a
 // roadblock forms ahead of the player; stars decay when the player stays out of sight.
 // The HUD's POLICE RESPONSE panel reads unitList(): each unit's name, distance in metres

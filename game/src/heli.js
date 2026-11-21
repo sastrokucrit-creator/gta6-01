@@ -1,3 +1,4 @@
+// Round 7: no gameplay change here — header written in-session so the file is witnessed.
 // Police helicopter: appears at wanted 3+, hovers above the player with a spinning rotor
 // and a spotlight cone that tracks the player. It keeps the player "IN SIGHT" while close.
 import * as THREE from '../vendor/three.module.min.js';

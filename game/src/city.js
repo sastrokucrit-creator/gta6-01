@@ -1,4 +1,5 @@
-// The city of Solara Bay: a sunny coastal grid. Roads run along both axes; each block holds
+// Round 7: fixed a stale name in this header (Solara Bay → Azura Bay); gameplay unchanged.
+// The city of Azura Bay: a sunny coastal grid. Roads run along both axes; each block holds
 // 1-4 procedural buildings with canvas window textures, plus trees, lamps and sidewalks.
 // Buildings are solid AABBs (cars and the player collide with them). The sea glitters to the
 // south (negative Z) beyond a palm-lined beach.

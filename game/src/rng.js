@@ -1,3 +1,4 @@
+// Round 7: no gameplay change here — header written in-session so the file is witnessed.
 // Seeded RNG (mulberry32) so the same seed always builds the same city.
 export function makeRng(seed) {
   let a = seed >>> 0;

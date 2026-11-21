@@ -84,12 +84,16 @@ export function updateHud(game) {
   } else sight.style.display = 'none';
   // Azura PD dispatch (mid-left): named units with role + live distance, and a
   // unit count in the title so the heat reads at a glance. AIR ONE joins the
-  // panel with its spotlight role while the helicopter is up.
+  // panel with its spotlight role while the helicopter is up. The nearest unit
+  // gets its own line with its live distance — the one the player has to worry
+  // about right now (round 7).
   const pol = $('police');
   if (game.wanted.stars > 0) {
     pol.style.display = 'block';
     const units = unitList(game.wanted, game.heli, p.x, p.z);
     $('police').querySelector('.ptitle').textContent = `AZURA PD DISPATCH · ${units.length} UNIT${units.length === 1 ? '' : 'S'}`;
+    const nearest = units.length ? units.reduce((b, u) => (u.dist < b.dist ? u : b)) : null;
+    $('pnearest').textContent = nearest ? `NEAREST: ${nearest.name} · ${nearest.dist}m` : '';
     $('units').innerHTML = units.map((u) =>
       `<div class="unit"><b>${u.name}</b> · <span class="role">${u.status}</span> · ${u.dist}m</div>`).join('') ||
       '<div class="unit">No units in range</div>';

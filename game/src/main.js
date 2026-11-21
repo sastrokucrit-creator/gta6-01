@@ -237,7 +237,7 @@ const game = {
     wanted.ghostT = 0;
     for (const s of crew.slots) s.cd = 0;
     missions.active = -1; missions.stage = 0; missions.done.fill(false);
-    missions.dialog = null; missions.dialogT = 0;
+    missions.dialog = null; missions.dialogT = 0; missions.dialogQueue = [];
     game._prevStars = 0; game._dispatchT = -99; // dispatch voice resets with the run
     if (missions.targetCar) { scene.remove(missions.targetCar.mesh); missions.targetCar = null; }
     game.clockMinutes = 9 * 60; game.day = 1;
@@ -492,6 +492,7 @@ function startGame(fromSave) {
 function say(ms, who, text, seconds) {
   ms.dialog = { who, text };
   ms.dialogT = seconds || 6;
+  ms.dialogQueue = []; // a direct line replaces any queued exchange (round 7)
 }
 
 document.getElementById('btnStart').addEventListener('click', () => startGame(false));

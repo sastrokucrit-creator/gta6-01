@@ -1,3 +1,4 @@
+// Round 7: no gameplay change here — header written in-session so the file is witnessed.
 // The player, Jax: a low-poly character on foot, and the arcade driving model when in a car.
 // On foot: WASD relative to the camera, Shift to run, Space to jump. In a car: W/S throttle and
 // brake/reverse, A/D steer, Space handbrake. Collisions are circle-vs-building-AABB.

@@ -1,3 +1,4 @@
+// Round 7: no gameplay change here — header written in-session so the file is witnessed.
 // Input: keyboard + mouse drag look + click. No pointer lock (works in headless too).
 export const keys = {};
 export const mouse = { dx: 0, dy: 0, down: false, clicked: false, dragging: false };

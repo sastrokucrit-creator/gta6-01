@@ -123,7 +123,7 @@ export function stageShot(name, game) {
     // the hotel block itself.
     g.startMission(1);
     g.missions.stage = 1; // delivery leg
-    g.missions.dialog = { who: 'MARA', text: 'The hotel wants that package in 90 seconds. Don\'t get it wet!' };
+    g.missions.dialog = { who: 'MARA', text: 'The Palm Court Hotel wants that package in 90 seconds. Don\'t get it wet!' };
     g.missions.dialogT = 99;
     const car = driveCar(g, 60, 66, Math.PI / 2, 14, [g.traffic[2], g.traffic[3]]);
     if (car) car.name = 'Coast Cruiser';
@@ -159,7 +159,7 @@ export function stageShot(name, game) {
   }
   // Default: foot — on foot in Neon Mile, peds, taxis, mission ready.
   g.teleportPlayer(18, 18, Math.PI);
-  g.missions.dialog = { who: 'DEX', text: 'Nice day for a walk, Jax. The city is yours — if you can take it.' };
+  g.missions.dialog = { who: 'DEX', text: 'Nice day for a walk, Jax. The Neon Arch is just up Neon Avenue — the city is yours, if you can take it.' };
   g.missions.dialogT = 99;
   // Pull six pedestrians onto the sidewalks ahead of the player so the shot shows
   // foot traffic, not an empty street.

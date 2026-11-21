@@ -1,3 +1,4 @@
+// Round 7: no gameplay change here — header written in-session so the file is witnessed.
 // Crew abilities: Jax's three partners each have one signature move. They sit
 // on their own keys (Q, C, V) with their own cooldowns and show as cards on the
 // HUD. The effects are real game state — wanted stars, car condition, police

@@ -1,3 +1,5 @@
+// Round 7: Jax finally speaks in missions now — his portrait (cap + stubble) was already
+// drawn here, so no portrait change was needed; the dialogue box just shows him at last.
 // Drawn character portraits for the dialogue box: each crew member gets a small
 // stylized face (skin, hair, one signature accessory) on a 56x56 canvas, so the
 // speaker reads as a person, not a letter. Drawn fresh each time dialogue shows.

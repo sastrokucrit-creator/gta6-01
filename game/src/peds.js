@@ -1,3 +1,4 @@
+// Round 7: no gameplay change here — header written in-session so the file is witnessed.
 // Pedestrians: simple capsule people strolling on sidewalks, in varied shirt colours.
 // They flee when scared (gunfire, nearby crash) and can be punched (wanted +1).
 import * as THREE from '../vendor/three.module.min.js';

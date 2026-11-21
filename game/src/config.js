@@ -59,6 +59,24 @@ export function streetAt(x, z) {
   return Math.abs(x - av.at) <= Math.abs(z - st.at) ? av.name : st.name;
 }
 
+// Named venues: every mission target is a real place with a name and a street,
+// so the dialogue, the stage text and the mission panel always say exactly
+// where the job happens — never just "the hotel" or "the docks". The `where`
+// is the street (streetAt) at the venue's coordinates, so the dialogue and
+// the HUD district/street line can never disagree about a place.
+export const VENUES = {
+  GARAGE: { name: "MARA'S GARAGE", where: 'Dock Street' },
+  PIER9: { name: 'PIER 9', where: 'South Pier Road' },
+  PALM_COURT: { name: 'THE PALM COURT HOTEL', where: 'Hotel Row' },
+  WAREHOUSE7: { name: 'WAREHOUSE 7', where: 'Airstrip Road' },
+  CORAL_CROWN: { name: 'THE CORAL CROWN CASINO', where: 'Casino Row' },
+  SOLSTICE: { name: 'THE SOLSTICE', where: 'Marina Walk' },
+  SAFEHOUSE: { name: 'THE SAFEHOUSE', where: 'Dock Street' },
+  HIDEOUT: { name: 'THE HIDEOUT', where: 'Coral Avenue' },
+  AIRSTRIP: { name: 'AZURA AIRSTRIP', where: 'Airstrip Road' },
+  NEON_ARCH: { name: 'THE NEON ARCH', where: 'Neon Avenue' },
+};
+
 // Original car model names (one per traffic colour slot, plus the taxi).
 export const CAR_NAMES = ['Comet GT', 'Coast Cruiser', 'Dune Runner', 'Street Hawk', 'Vulture', 'Palm Runner', 'Bay Breeze', 'Night Fox', 'Turbo Ray'];
 export const TAXI_NAME = 'Azura Cab';

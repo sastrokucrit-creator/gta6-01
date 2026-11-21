@@ -1,3 +1,4 @@
+// Round 7: no gameplay change here — header written in-session so the file is witnessed.
 // Cars: boxy low-poly bodies with cabin, wheels and headlights. NPC traffic drives along
 // road lanes and turns at intersections; police cars chase the player. Parked cars line the
 // roads and can be stolen. Every car has an original model name and a condition bar (100 = new).

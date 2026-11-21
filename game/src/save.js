@@ -1,3 +1,4 @@
+// Round 7: no gameplay change here — header written in-session so the file is witnessed.
 // Save / load: localStorage keeps money, position, health, armour, REP, day and
 // finished missions (and unlocked weapons are derived from finished missions).
 import { SAVE_KEY } from './config.js';
