@@ -33,16 +33,42 @@ export function districtAt(x, z) {
   return DISTRICTS[row][col];
 }
 
+// Street names: the six avenues run north-south (x = road centre), the six
+// streets run east-west (z = road centre). Every road in Azura Bay has a name,
+// so the HUD, the dispatch and the dialogue can always say exactly where you are.
+export const AVENUES = [
+  { at: -126, name: 'SUNSET BOULEVARD' },
+  { at: -78, name: 'PALM AVENUE' },
+  { at: -30, name: 'MARINA BOULEVARD' },
+  { at: 18, name: 'NEON AVENUE' },
+  { at: 66, name: 'CORAL AVENUE' },
+  { at: 114, name: 'HARBOR ROAD' },
+];
+export const STREETS = [
+  { at: -126, name: 'SOUTH PIER ROAD' },
+  { at: -78, name: 'BEACHFRONT' },
+  { at: -30, name: 'DOCK STREET' },
+  { at: 18, name: 'CASINO ROW' },
+  { at: 66, name: 'HOTEL ROW' },
+  { at: 114, name: 'AIRSTRIP ROAD' },
+];
+export function streetAt(x, z) {
+  const nearest = (v, list) => list.reduce((b, r) => (Math.abs(v - r.at) < Math.abs(v - b.at) ? r : b));
+  const av = nearest(x, AVENUES);
+  const st = nearest(z, STREETS);
+  return Math.abs(x - av.at) <= Math.abs(z - st.at) ? av.name : st.name;
+}
+
 // Original car model names (one per traffic colour slot, plus the taxi).
 export const CAR_NAMES = ['Comet GT', 'Coast Cruiser', 'Dune Runner', 'Street Hawk', 'Vulture', 'Palm Runner', 'Bay Breeze', 'Night Fox', 'Turbo Ray'];
 export const TAXI_NAME = 'Azura Cab';
 
 // Radio stations (original names + song titles), switched with R in a car.
 export const RADIO = [
-  { freq: '88.1', name: 'WAVE 88.1', songs: ['Neon Drive — Palm Static', 'Midnight Palm — The Coasters', 'Salt Air — Marina Blue'] },
-  { freq: '94.5', name: 'PALM FM 94.5', songs: ['Turbo Heart — Velo City', 'Sunset Quay — Coral Kings', 'Boardwalk Nights — The Tides'] },
-  { freq: '101.2', name: 'BAY ROCK 101.2', songs: ['Engine Roar — Iron Palms', 'Highway Heat — Dust Devils', 'Chrome Hearts — The Rivieras'] },
-  { freq: '107.7', name: 'TROPICANA 107.7', songs: ['Isla Breeze — Coco Loco', 'Mango Sky — Sol Band', 'Fiesta Bay — Los Palmeros'] },
+  { freq: '88.1', name: 'WAVE 88.1', songs: ['Neon Drive — Palm Static', 'Midnight Palm — The Coasters', 'Salt Air — Marina Blue', 'Golden Hour — Sunset Riders'] },
+  { freq: '94.5', name: 'PALM FM 94.5', songs: ['Turbo Heart — Velo City', 'Sunset Quay — Coral Kings', 'Boardwalk Nights — The Tides', 'Neon Palms — Night Drive Club'] },
+  { freq: '101.2', name: 'BAY ROCK 101.2', songs: ['Engine Roar — Iron Palms', 'Highway Heat — Dust Devils', 'Chrome Hearts — The Rivieras', 'Thunder Bay — Storm Chasers'] },
+  { freq: '107.7', name: 'TROPICANA 107.7', songs: ['Isla Breeze — Coco Loco', 'Mango Sky — Sol Band', 'Fiesta Bay — Los Palmeros', 'Coconut Moon — Playa Azul'] },
 ];
 
 // Weapons: 5 slots, each with a shop price on the HUD. SMG unlocks after the

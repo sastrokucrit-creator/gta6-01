@@ -6,11 +6,22 @@ import { MISSION_REWARDS } from './config.js';
 import { unlockWeapons } from './weapons.js';
 
 export const SPEAKERS = {
-  MARA: { name: 'MARA', initial: 'M', color: '#c0392b' },
-  JAX: { name: 'JAX', initial: 'J', color: '#d94f3d' },
-  DEX: { name: 'DEX', initial: 'D', color: '#2980b9' },
-  LENA: { name: 'LENA', initial: 'L', color: '#8e44ad' },
-  BIGT: { name: 'BIG T', initial: 'T', color: '#27ae60' },
+  MARA: { name: 'MARA', role: 'Fixer · The Docks', initial: 'M', color: '#c0392b' },
+  JAX: { name: 'JAX', role: 'Wheelman', initial: 'J', color: '#d94f3d' },
+  DEX: { name: 'DEX', role: 'Driver', initial: 'D', color: '#2980b9' },
+  LENA: { name: 'LENA', role: 'Hacker · Lookout', initial: 'L', color: '#8e44ad' },
+  BIGT: { name: 'BIG T', role: 'Muscle', initial: 'T', color: '#27ae60' },
+  DISPATCH: { name: 'SGT. REYES', role: 'AZURA PD DISPATCH', initial: 'R', color: '#3b82ff' },
+};
+
+// What Sgt. Reyes says on the radio when the heat rises — one line per wanted
+// level, each naming a real Azura Bay street so the pursuit always has a place.
+export const DISPATCH_LINES = {
+  1: 'All units, stolen vehicle on Sunset Boulevard. Move in, keep it clean.',
+  2: 'Suspect is running the Marina Walk strip. Set up on the cross streets.',
+  3: 'Air One is up. Spotlight on the suspect — do not lose him in the Neon Mile.',
+  4: 'Roadblock going up ahead on Coral Row. All units converge.',
+  5: 'All units, full pursuit. The Crown is in that car — bring it home.',
 };
 
 // The twelve jobs run as four chapters of three, so the campaign reads like a
@@ -194,7 +205,10 @@ function advanceStage(ms, game) {
   const st = m.stages[ms.stage];
   if (st.wanted) game.setWanted(st.wanted);
   if (st.heli) game.setHeli(true);
-  say(ms, 'MARA', `Next: ${st.text}`, 4);
+  // Stage-advance voice rotates by what the stage asks for: Dex calls the
+  // driving, Lena the tails and grabs, Big T the escapes, Mara the rest.
+  const voice = { ram: 'DEX', follow: 'LENA', grab: 'LENA', escape: 'BIGT' }[st.kind] || 'MARA';
+  say(ms, voice, `Next: ${st.text}`, 4);
 }
 
 export function updateMissions(ms, dt, game, player) {

@@ -9,17 +9,17 @@ import { buildCity, hitsBuilding } from './city.js';
 import { spawnTraffic, spawnParked, spawnPolice, updateTraffic, updatePolice, updateTarget, makeCarMesh, Car, POLICE_COLOR } from './vehicles.js';
 import { spawnPeds, updatePeds } from './peds.js';
 import { createPlayer, updateFoot, updateDrive } from './player.js';
-import { createWanted, addWanted, clearWanted, updateWanted, clearRoadblock } from './wanted.js';
+import { createWanted, addWanted, clearWanted, updateWanted, clearRoadblock, UNIT_ROLES } from './wanted.js';
 import { createHeli, updateHeli } from './heli.js';
-import { MISSIONS, createMissionState, startMission, updateMissions, missionTarget, nextMission } from './missions.js';
+import { MISSIONS, DISPATCH_LINES, createMissionState, startMission, updateMissions, missionTarget, nextMission } from './missions.js';
 import { createCombat, punch, shoot, updateCombat } from './combat.js';
-import { createWeapons, currentWeapon, selectWeapon, unlockWeapons, spendAmmo, refillAmmo } from './weapons.js';
+import { createWeapons, currentWeapon, selectWeapon, unlockWeapons, spendAmmo, refillAmmo, lockInfo } from './weapons.js';
 import { createCrew, useCrew, updateCrew } from './crew.js';
 import { createRadio, nextStation, updateRadio, radioLabel } from './radio.js';
 import { createAudio } from './audio.js';
 import { initHud, updateHud, toast } from './hud.js';
 import { saveGame, loadGame, hasSave } from './save.js';
-import { initInput, keys, consumeClick, consumeLook } from './input.js';
+import { initInput, keys, consumeClick, consumeLook, edgePressed } from './input.js';
 import { stageShot } from './shots.js';
 
 const MAX_FRAME = 0.25;
@@ -103,7 +103,7 @@ const garagePos = { x: -100, z: -30 };
 
 // --- Game object (what HUD, missions and shots talk to) ---
 const game = {
-  player, traffic, parked, peds, wanted, heli, missions, weapons, crew, radio,
+  player, traffic, parked, peds, wanted, heli, missions, weapons, crew, radio, combat,
   missionDefs: MISSIONS,
   clockMinutes: 9 * 60, day: 1, time: 0,
   armed: false, dusk: false,
@@ -145,6 +145,8 @@ const game = {
     for (let i = 0; i < n; i++) {
       const a = Math.PI + (i - 1) * 0.5;
       const c = spawnPolice(scene, player.x + Math.sin(a) * dist, player.z + Math.cos(a) * dist, `APD-${i + 1}`);
+      c._role = UNIT_ROLES[i % UNIT_ROLES.length];
+      c._flankSide = i % 2 === 0 ? 1 : -1;
       wanted.police.push(c);
     }
   },
@@ -153,6 +155,7 @@ const game = {
     const fx = Math.sin(player.angle), fz = Math.cos(player.angle);
     const c = spawnPolice(scene, player.x + fx * dist, player.z + fz * dist, 'APD-7 "HAWK"');
     c.angle = player.angle + Math.PI;
+    c._role = 'RAMMING'; // the car ahead is coming straight at the player
     c._dist = dist; // panel distance (updatePolice never ran for this car yet)
     c.sync();
     wanted.police.push(c);
@@ -235,6 +238,7 @@ const game = {
     for (const s of crew.slots) s.cd = 0;
     missions.active = -1; missions.stage = 0; missions.done.fill(false);
     missions.dialog = null; missions.dialogT = 0;
+    game._prevStars = 0; game._dispatchT = -99; // dispatch voice resets with the run
     if (missions.targetCar) { scene.remove(missions.targetCar.mesh); missions.targetCar = null; }
     game.clockMinutes = 9 * 60; game.day = 1;
     camYaw = Math.PI;
@@ -252,11 +256,23 @@ const game = {
     const allCars = [...traffic, ...parked];
     for (const c of traffic) updateTraffic(c, dt, rng, allCars);
     if (missions.targetCar) updateTarget(missions.targetCar, dt, rng, player.x, player.z, missions.targetMode || 'loop');
-    // Peds.
-    updatePeds(peds, dt, rng, player.x, player.z, game._scared);
+    // Peds. A nearby police car scares them on its own (they flee the car,
+    // not just gunfire), so a pursuit visibly clears the sidewalk.
+    updatePeds(peds, dt, rng, player.x, player.z, game._scared, wanted.police);
     game._scared = false;
     // Wanted + police + heli.
     updateWanted(wanted, dt, scene, rng, player.x, player.z, player.angle, () => onBusted());
+    // Azura PD dispatch voice: when the heat rises and no dialogue is showing,
+    // Sgt. Reyes cuts in on the radio — at most one line per 20 s, so he never
+    // talks over a mission briefing or another dispatch call.
+    if (wanted.stars > (game._prevStars ?? 0)) {
+      if (missions.dialogT <= 0 && game.time - (game._dispatchT ?? -99) > 20) {
+        say(missions, 'DISPATCH', DISPATCH_LINES[wanted.stars] || DISPATCH_LINES[1], 6);
+        audio.squelch();
+        game._dispatchT = game.time;
+      }
+    }
+    game._prevStars = wanted.stars;
     updateHeli(heli, dt, player.x, player.z, game.time, player.inCar ? player.inCar.angle : player.angle);
     // The ferris wheel turns slowly, day and night.
     if (city.ferris) city.ferris.rotation.z += dt * 0.07;
@@ -387,16 +403,10 @@ function updateCamera(dt) {
 }
 
 // --- Input edges ---
-const prev = {};
-function edge(code) {
-  const down = !!keys[code];
-  const hit = down && !prev[code];
-  prev[code] = down;
-  return hit;
-}
-
+// Edge detection lives in input.js (edgePressed): one shared previous-state map,
+// so the frame loop and the input handler see the same key presses.
 function handleInput() {
-  if (edge('KeyE')) {
+  if (edgePressed('KeyE')) {
     if (player.inCar) game.exitCar();
     else {
       const car = game.nearestCar(player.x, player.z, 4.5);
@@ -404,28 +414,28 @@ function handleInput() {
       else toast('No car nearby — get closer and press E');
     }
   }
-  if (edge('KeyF') && !player.inCar) {
+  if (edgePressed('KeyF') && !player.inCar) {
     if (punch(player, peds, () => { addWanted(wanted, 1); audio.punch(); })) { /* hit */ }
   }
-  if (edge('KeyR') && player.inCar) {
+  if (edgePressed('KeyR') && player.inCar) {
     const label = nextStation(radio);
     toast(`♪ ${label}`);
     audio.startMusic(radio.station);
   }
-  if (edge('KeyM')) {
+  if (edgePressed('KeyM')) {
     const id = nextMission(missions);
     if (missions.active < 0 && id >= 0) startMission(missions, id, game);
     else if (missions.active >= 0) toast('Mission already active — finish it first!');
     else toast('All 12 missions complete!');
   }
   // Crew abilities: Q Mara (swap plates), C Dex (quick fix), V Lena (eyes out).
-  if (edge('KeyQ')) { if (!useCrew(game, 0)) toast('SWAP PLATES is cooling down — wait for the card'); }
-  if (edge('KeyC')) { if (!useCrew(game, 1)) toast('QUICK FIX needs a car — or is cooling down'); }
-  if (edge('KeyV')) { if (!useCrew(game, 2)) toast('EYES OUT is cooling down — wait for the card'); }
+  if (edgePressed('KeyQ')) { if (!useCrew(game, 0)) toast('SWAP PLATES is cooling down — wait for the card'); }
+  if (edgePressed('KeyC')) { if (!useCrew(game, 1)) toast('QUICK FIX needs a car — or is cooling down'); }
+  if (edgePressed('KeyV')) { if (!useCrew(game, 2)) toast('EYES OUT is cooling down — wait for the card'); }
   for (let i = 0; i < 5; i++) {
-    if (edge(`Digit${i + 1}`)) {
+    if (edgePressed(`Digit${i + 1}`)) {
       if (selectWeapon(weapons, i)) toast(`${currentWeapon(weapons).name} ready`);
-      else if (weapons.slots[i].locked) toast(`${weapons.slots[i].name} is LOCKED — finish more missions`);
+      else if (weapons.slots[i].locked) toast(lockInfo(weapons.slots[i]) || `${weapons.slots[i].name} is LOCKED`);
     }
   }
   if (consumeClick() && !player.inCar) {
@@ -511,7 +521,7 @@ function frame(now) {
   requestAnimationFrame(frame);
   accumulator += Math.min((now - last) / 1000, MAX_FRAME);
   last = now;
-  if (edge('KeyP') || edge('Escape')) {
+  if (edgePressed('KeyP') || edgePressed('Escape')) {
     if (screen === 'play') { paused = !paused; pauseEl.style.display = paused ? 'flex' : 'none'; }
   }
   if (screen === 'play' && !paused) {

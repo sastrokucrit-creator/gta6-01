@@ -4,7 +4,7 @@
 // south (negative Z) beyond a palm-lined beach.
 import * as THREE from '../vendor/three.module.min.js';
 import { BLOCK, GRID, HALF, PITCH, ROAD, ROAD_CENTERS } from './config.js';
-import { pick, range, rangeInt } from './rng.js';
+import { pick, range, rangeInt, shuffle } from './rng.js';
 
 const WALL_COLORS = [0xe8dcc8, 0xd9c4a5, 0xc9b8a3, 0xb8c4c9, 0xe0b48f, 0xf2e3c6, 0xc7d3c0, 0xdba58a];
 // Bright sun-soaked facades: pink, orange, teal, yellow, coral, sky, purple.
@@ -209,6 +209,36 @@ function makeFerrisWheel() {
   return { group: g, wheel };
 }
 
+// A street-name plate on a post: green sign, white capitals, double-sided so it
+// reads from both ends of the road. Same canvas-texture pattern as the neon signs.
+function makeStreetPlate(text, x, z, rotY) {
+  const g = new THREE.Group();
+  const post = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.08, 0.1, 3.2, 6),
+    new THREE.MeshLambertMaterial({ color: 0x333a42 }),
+  );
+  post.position.y = 1.6; post.castShadow = true;
+  g.add(post);
+  const c = document.createElement('canvas');
+  c.width = 512; c.height = 96;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#1a4a2a'; ctx.fillRect(0, 0, 512, 96);
+  ctx.strokeStyle = '#f2f2f2'; ctx.lineWidth = 4; ctx.strokeRect(4, 4, 504, 88);
+  ctx.font = 'bold 44px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#ffffff'; ctx.fillText(text, 256, 50);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const sign = new THREE.Mesh(
+    new THREE.PlaneGeometry(5.4, 1.0),
+    new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide }),
+  );
+  sign.position.y = 3.4;
+  g.add(sign);
+  g.position.set(x, 0, z);
+  g.rotation.y = rotY;
+  return g;
+}
+
 export function buildCity(scene, rng) {
   const aabbs = [];
   const textures = [];
@@ -358,6 +388,10 @@ export function buildCity(scene, rng) {
       scene.add(lamp2);
     }
   }
+  // Street-name plates at the Neon Mile crossroads (NEON AVENUE × CASINO ROW):
+  // the one intersection every screenshot stages, now signed like a real city.
+  scene.add(makeStreetPlate('NEON AVENUE', 26, 10, -Math.PI / 2));
+  scene.add(makeStreetPlate('CASINO ROW', 10, 26, Math.PI));
   // Neon signs on a few buildings (emissive canvas text; they glow at dusk).
   const NEON = [
     { text: 'HOTEL', color: '#ff4fd8' }, { text: 'BAR', color: '#37e0ff' },
@@ -366,10 +400,13 @@ export function buildCity(scene, rng) {
     { text: 'SUNSET', color: '#ff6b5e' }, { text: 'PIER 9', color: '#7dd3fc' },
     { text: 'WAVES', color: '#2fb8a6' },
   ];
+  // The sign order is shuffled (seeded), so the same seed still builds the
+  // same city, but no two rounds hang the same sign on the same corner.
+  const neonOrder = shuffle(rng, NEON);
   const neonMeshes = [];
   for (let i = 0; i < 11; i++) {
     const bc = blockCenters[Math.floor(rng() * blockCenters.length)];
-    const n = NEON[i % NEON.length];
+    const n = neonOrder[i % neonOrder.length];
     const c = document.createElement('canvas');
     c.width = 256; c.height = 64;
     const g2 = c.getContext('2d');

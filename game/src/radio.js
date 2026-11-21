@@ -12,6 +12,12 @@ export function radioLabel(radio) {
   return `${st.name} · ${st.songs[radio.song % st.songs.length]}`;
 }
 
+// What is playing right now: station + song, for the HUD's NOW PLAYING line.
+export function radioNow(radio) {
+  const st = RADIO[radio.station];
+  return { station: st.name, song: st.songs[radio.song % st.songs.length] };
+}
+
 export function nextStation(radio) {
   radio.station = (radio.station + 1) % RADIO.length;
   radio.song = 0;

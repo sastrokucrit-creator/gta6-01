@@ -68,6 +68,8 @@ export class Car {
     this.name = name || 'Comet GT';
     this.condition = 100;
     this.taxi = false;
+    this._role = null; // police dispatch role (RAMMING / PURSUIT / FLANKING / ...), set at spawn
+    this._flankSide = 1;
     this.sync();
   }
   sync() {
@@ -186,9 +188,12 @@ export function updateTraffic(car, dt, rng, cars) {
 }
 
 // Police: steer toward the player and ram. Returns distance to player.
-export function updatePolice(car, dt, px, pz, speed) {
-  const dx = px - car.x, dz = pz - car.z;
-  const dist = Math.hypot(dx, dz);
+// `aim` overrides the steering target (a FLANKING unit cuts across to a point
+// off the player's flank); the returned distance is always to the player.
+export function updatePolice(car, dt, px, pz, speed, aim) {
+  const tx = aim ? aim.x : px, tz = aim ? aim.z : pz;
+  const dx = tx - car.x, dz = tz - car.z;
+  const dist = Math.hypot(px - car.x, pz - car.z);
   const wantAngle = Math.atan2(dx, dz);
   let diff = wantAngle - car.angle;
   while (diff > Math.PI) diff -= 2 * Math.PI;

@@ -6,14 +6,15 @@
 // The game: AZURA BAY, an original open-world crime game in sunny 3D — a coastal city with
 // procedural buildings, palms and beach; third-person walking and driving; stealable cars
 // (named models, taxis, condition); NPC traffic and pedestrians; a 5-star wanted system with
-// named police units, roadblocks and a searchlight helicopter; 12 story missions in 4 named
-// chapters with stages, timers and big payouts (a crew: Jax, Mara, Dex, Lena, Big T); 5 weapons
-// with prices, one locked until the finale; 3 crew abilities on their own keys; a RANK ladder
-// that climbs through the campaign; in-car radio with 4 original stations;
-// a dense HUD (mission panel, weapons, police response, crew cards, round minimap with a
-// search zone + district, dialogue with portraits, speedometer + car condition + radio,
-// health/armour/RANK); save/continue, a garage safehouse, procedural WebAudio sound and music,
-// and a pause menu.
+// a named AZURA PD DISPATCH panel (callsign + role + live distance, helicopter row, roadblocks)
+// and a dispatch voice on the radio; 12 story missions in 4 named chapters with stages, timers
+// and big payouts (a crew: Jax, Mara, Dex, Lena, Big T); 5 weapons with prices, one locked until
+// the finale; 3 crew abilities on their own keys; a RANK ladder that climbs through the campaign;
+// in-car radio with 4 original stations (NOW PLAYING in the HUD); named streets on plates and in
+// the HUD; a dense HUD (mission panel, weapons, dispatch, crew cards, round minimap with a
+// search zone + district and street, dialogue with portraits and roles, speedometer + car
+// condition + radio, health/armour/RANK); save/continue, a garage safehouse, procedural WebAudio
+// sound and music, and a pause menu.
 // Put your 3 or 4 PNG or JPEG screenshots in screenshots/ (the first by name is the cover) and run it.
 //
 // Serve it locally with `node serve.ts`, then open http://localhost:8080.

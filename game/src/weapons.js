@@ -1,6 +1,7 @@
-// Weapons: 4 slots (1 Fists, 2 Pistol, 3 SMG, 4 Shotgun). SMG unlocks after mission 3,
-// shotgun after mission 5. Ammo is shown in the HUD; switching is instant (keys 1-4).
-// Fists punch; the rest shoot hitscan with per-weapon damage, rate and range.
+// Weapons: 5 slots (1 Fists, 2 Pistol, 3 SMG, 4 Shotgun, 5 REAPER). SMG unlocks after
+// mission 3, shotgun after mission 5, the REAPER after the final job. Ammo is shown in the
+// HUD; switching is instant (keys 1-5). Fists punch; the rest shoot hitscan with
+// per-weapon damage, rate and range.
 import { WEAPONS } from './config.js';
 
 export function createWeapons() {
@@ -18,6 +19,13 @@ export function selectWeapon(w, index) {
   if (w.slots[index].locked) return false;
   w.current = index;
   return true;
+}
+
+// The locked-weapon line for the HUD toast: name, price and the exact job
+// that unlocks it (slot.unlockMission is 0-based, so the job number is +1).
+export function lockInfo(slot) {
+  if (!slot.locked) return null;
+  return `${slot.name} $${slot.price.toLocaleString('en-US')} 🔒 — finish mission ${(slot.unlockMission ?? 0) + 1}`;
 }
 
 export function unlockWeapons(w, doneMissions) {

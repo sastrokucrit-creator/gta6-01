@@ -1,7 +1,11 @@
 // Drawn character portraits for the dialogue box: each crew member gets a small
 // stylized face (skin, hair, one signature accessory) on a 56x56 canvas, so the
 // speaker reads as a person, not a letter. Drawn fresh each time dialogue shows.
-const SKIN = { MARA: '#f2c19b', JAX: '#e8b98a', DEX: '#c98d5f', LENA: '#f6d3b3', BIGT: '#8a5a3b' };
+const SKIN = { MARA: '#f2c19b', JAX: '#e8b98a', DEX: '#c98d5f', LENA: '#f6d3b3', BIGT: '#8a5a3b', DISPATCH: '#d9a06b' };
+// Ring colour per speaker (mirrors SPEAKERS in missions.js): the dialogue
+// portrait wears a thin ring in its speaker's colour, so the voice reads
+// at a glance — blue for the dispatch.
+const COLORS = { MARA: '#c0392b', JAX: '#d94f3d', DEX: '#2980b9', LENA: '#8e44ad', BIGT: '#27ae60', DISPATCH: '#3b82ff' };
 
 function base(ctx, who) {
   // Background disc in the speaker's colour, then the face.
@@ -94,10 +98,31 @@ function drawBigt(ctx) {
   mouth(ctx, 41, false);
 }
 
-const DRAW = { MARA: drawMara, JAX: drawJax, DEX: drawDex, LENA: drawLena, BIGT: drawBigt };
+function drawDispatch(ctx) {
+  base(ctx, 'DISPATCH');
+  // Navy police cap with a gold badge, plus a headset with a mic boom.
+  ctx.fillStyle = '#1a2a4a';
+  ctx.beginPath(); ctx.ellipse(28, 19, 15.5, 9, 0, Math.PI, Math.PI * 2); ctx.fill();
+  ctx.fillRect(12, 18, 32, 4); // brim
+  ctx.fillStyle = '#ffd23e';
+  ctx.beginPath(); ctx.arc(28, 14, 2.5, 0, Math.PI * 2); ctx.fill(); // badge
+  ctx.strokeStyle = '#222'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(28, 30, 17, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke(); // headset band
+  ctx.beginPath(); ctx.moveTo(44, 34); ctx.lineTo(38, 42); ctx.stroke(); // mic boom
+  ctx.fillStyle = '#222';
+  ctx.beginPath(); ctx.arc(37, 43, 2, 0, Math.PI * 2); ctx.fill(); // mic
+  eyes(ctx, 30, 6);
+  mouth(ctx, 41, false);
+}
+
+const DRAW = { MARA: drawMara, JAX: drawJax, DEX: drawDex, LENA: drawLena, BIGT: drawBigt, DISPATCH: drawDispatch };
 
 export function drawPortrait(canvas, who) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
   (DRAW[who] || DRAW.MARA)(ctx);
+  // Thin ring in the speaker's colour around the portrait.
+  ctx.strokeStyle = COLORS[who] || COLORS.MARA;
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(28, 28, 26, 0, Math.PI * 2); ctx.stroke();
 }

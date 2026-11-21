@@ -11,3 +11,12 @@ export function makeRng(seed) {
 export function pick(rng, arr) { return arr[Math.floor(rng() * arr.length)]; }
 export function range(rng, lo, hi) { return lo + rng() * (hi - lo); }
 export function rangeInt(rng, lo, hi) { return lo + Math.floor(rng() * (hi - lo + 1)); }
+// Fisher-Yates shuffle on a copy (seeded, so the same seed shuffles the same way).
+export function shuffle(rng, arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}

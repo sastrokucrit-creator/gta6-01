@@ -53,17 +53,28 @@ export function spawnPeds(scene, rng, count) {
   return peds;
 }
 
-export function updatePeds(peds, dt, rng, scareX, scareZ, scared) {
+export function updatePeds(peds, dt, rng, scareX, scareZ, scared, police) {
   for (const p of peds) {
     if (!p.alive) continue;
     if (p.fall > 0) { p.fall -= dt; if (p.fall <= 0) { p.fall = 0; p.alive = false; p.mesh.visible = false; } p.sync(); continue; }
+    // Flee direction: away from the scare point by default; a police car closer
+    // than 6 m scares on its own, and the ped flees from that car instead.
+    let fx = scareX, fz = scareZ;
     if (scared) {
       const d = Math.hypot(p.x - scareX, p.z - scareZ);
       if (d < 25) p.flee = 3;
     }
+    if (police) {
+      let nearest = null, nd = 6;
+      for (const c of police) {
+        const d = Math.hypot(p.x - c.x, p.z - c.z);
+        if (d < nd) { nd = d; nearest = c; }
+      }
+      if (nearest) { p.flee = 3; fx = nearest.x; fz = nearest.z; }
+    }
     if (p.flee > 0) {
       p.flee -= dt;
-      const dx = p.x - scareX, dz = p.z - scareZ;
+      const dx = p.x - fx, dz = p.z - fz;
       const d = Math.hypot(dx, dz) || 1;
       p.angle = Math.atan2(dx / d, dz / d);
       p.x += (dx / d) * 4.5 * dt;

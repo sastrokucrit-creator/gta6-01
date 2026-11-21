@@ -15,7 +15,7 @@ export function createCombat(scene) {
   );
   flash.visible = false;
   scene.add(flash);
-  return { tracer, flash, flashT: 0 };
+  return { tracer, flash, flashT: 0, shots: 0 };
 }
 
 export function punch(player, peds, onHit) {
@@ -38,6 +38,7 @@ export function punch(player, peds, onHit) {
 export function shoot(player, combat, weapon, peds, cars, police, onHit) {
   if (player.shootCooldown > 0) return false;
   player.shootCooldown = weapon.rate;
+  combat.shots += 1; // every shot fired, hit or miss — the debug handle reads it
   const fx = Math.sin(player.angle), fz = Math.cos(player.angle);
   const ox = player.x, oz = player.z;
   let best = null, bestD = weapon.range;

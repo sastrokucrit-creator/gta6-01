@@ -23,3 +23,13 @@ export function initInput(canvas) {
 }
 export function consumeClick() { const c = mouse.clicked; mouse.clicked = false; return c; }
 export function consumeLook() { const d = { dx: mouse.dx, dy: mouse.dy }; mouse.dx = 0; mouse.dy = 0; return d; }
+
+// Edge detection: true only on the frame a key is first pressed (not while held).
+// One shared previous-state map, so every caller sees the same edges.
+const prev = {};
+export function edgePressed(code) {
+  const down = !!keys[code];
+  const hit = down && !prev[code];
+  prev[code] = down;
+  return hit;
+}

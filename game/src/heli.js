@@ -88,6 +88,12 @@ export function createHeli(scene) {
   return { mesh, active: false, x: 0, y: 34, z: 0, angle: 0 };
 }
 
+// Live distance from the helicopter to the player, in metres — the DISPATCH
+// panel reads it straight off this, so AIR ONE always shows a true number.
+export function heliDist(heli, px, pz) {
+  return Math.hypot(heli.x - px, heli.z - pz);
+}
+
 export function updateHeli(heli, dt, px, pz, time, heading) {
   if (!heli.active) { heli.mesh.visible = false; return; }
   heli.mesh.visible = true;

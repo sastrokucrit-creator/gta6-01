@@ -2,7 +2,7 @@
 // On foot: WASD relative to the camera, Shift to run, Space to jump. In a car: W/S throttle and
 // brake/reverse, A/D steer, Space handbrake. Collisions are circle-vs-building-AABB.
 import * as THREE from '../vendor/three.module.min.js';
-import { CAR, PLAYER } from './config.js';
+import { CAR, PLAYER, streetAt } from './config.js';
 import { hitsBuilding } from './city.js';
 
 export function makePlayerMesh() {
@@ -33,6 +33,7 @@ export function createPlayer(scene, x, z) {
   const p = {
     mesh, x, z, y: 0, vy: 0, angle: 0, health: 100, armour: 50, money: 2000, rep: 0,
     inCar: null, speed: 0, walkPhase: 0, onGround: true, punchCooldown: 0, shootCooldown: 0,
+    street: streetAt(x, z), // cached street name, refreshed every step
   };
   p.mesh.position.set(x, 0, z);
   return p;
@@ -88,6 +89,7 @@ export function updateFoot(p, dt, input, camYaw, aabbs, bounds) {
   p.mesh.userData.armR.rotation.x = swing * 0.7;
   p.punchCooldown = Math.max(0, p.punchCooldown - dt);
   p.shootCooldown = Math.max(0, p.shootCooldown - dt);
+  p.street = streetAt(p.x, p.z);
 }
 
 export function updateDrive(p, dt, input, aabbs, bounds, onCrash) {
@@ -117,4 +119,5 @@ export function updateDrive(p, dt, input, aabbs, bounds, onCrash) {
   }
   p.x = car.x; p.z = car.z; p.angle = car.angle;
   car.sync();
+  p.street = streetAt(p.x, p.z);
 }

@@ -4,7 +4,7 @@
 // sight — so a test can read them straight off the game object.
 export const CREW_ABILITIES = [
   {
-    key: 'KeyQ', label: 'Q', who: 'MARA', name: 'SWAP PLATES',
+    key: 'KeyQ', label: 'Q', who: 'MARA', role: 'Fixer', name: 'SWAP PLATES',
     desc: 'Mara swaps the plates — lose 2 wanted stars',
     cooldown: 60,
     apply(game) {
@@ -17,7 +17,7 @@ export const CREW_ABILITIES = [
     },
   },
   {
-    key: 'KeyC', label: 'C', who: 'DEX', name: 'QUICK FIX',
+    key: 'KeyC', label: 'C', who: 'DEX', role: 'Driver', name: 'QUICK FIX',
     desc: 'Dex patches the car on the move — condition back to 100%',
     cooldown: 45,
     apply(game) {
@@ -28,7 +28,7 @@ export const CREW_ABILITIES = [
     },
   },
   {
-    key: 'KeyV', label: 'V', who: 'LENA', name: 'EYES OUT',
+    key: 'KeyV', label: 'V', who: 'LENA', role: 'Hacker · Lookout', name: 'EYES OUT',
     desc: 'Lena loops the cameras — police lose sight of you for 20s',
     cooldown: 40,
     apply(game) {
@@ -62,10 +62,10 @@ export function updateCrew(game, dt) {
   if (game.wanted.ghostT > 0) game.wanted.ghostT = Math.max(0, game.wanted.ghostT - dt);
 }
 
-// Rows for the HUD crew panel: key, name, who, effect and whether it is ready.
+// Rows for the HUD crew panel: key, name, who + role, effect and whether it is ready.
 export function crewHud(game) {
   return game.crew.slots.map((s) => ({
-    key: s.label, name: s.name, who: s.who, desc: s.desc,
+    key: s.label, name: s.name, who: s.who, role: s.role, desc: s.desc,
     ready: s.cd <= 0, cd: Math.ceil(s.cd),
   }));
 }

@@ -63,6 +63,9 @@ export function createAudio() {
   };
   a.gunshot = function () { a.noise(0.16, 0.28); a.blip(160, 0.1, 'square', 0.1); };
   a.punch = function () { a.noise(0.09, 0.2); a.blip(90, 0.08, 'sine', 0.18); };
+  // Two-tone radio squelch for the dispatch voice: a short double-beep, the
+  // sound of Sgt. Reyes keying the radio before he speaks.
+  a.squelch = function () { a.blip(1200, 0.07, 'square', 0.08); setTimeout(() => a.blip(900, 0.09, 'square', 0.08), 80); };
   a.chime = function () { a.blip(880, 0.12, 'sine', 0.14); setTimeout(() => a.blip(1318, 0.18, 'sine', 0.14), 110); };
   a.startMusic = function (station) {
     if (!a.ctx) return;

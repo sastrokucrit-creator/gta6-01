@@ -5,6 +5,7 @@ import { SAVE_KEY } from './config.js';
 export function saveGame(game) {
   try {
     const data = {
+      saveVersion: 1,
       money: game.player.money,
       health: game.player.health,
       armour: game.player.armour,
@@ -25,6 +26,7 @@ export function loadGame() {
     if (!raw) return null;
     const d = JSON.parse(raw);
     if (typeof d.money !== 'number') return null;
+    if (d.saveVersion !== 1) return null; // older saves are ignored, not migrated
     return d;
   } catch { return null; }
 }

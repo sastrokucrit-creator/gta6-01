@@ -2,13 +2,13 @@
 // day+time / IN SIGHT (top-right), police response (mid-left), round minimap + district
 // (bottom-left), health/armour/REP (bottom-left), character dialogue with portrait
 // (bottom-centre), speedometer + car name + condition + radio + gear (bottom-right).
-import { HALF, ROAD_CENTERS, districtAt, MISSION_REWARDS } from './config.js';
+import { HALF, ROAD_CENTERS, districtAt, streetAt, MISSION_REWARDS } from './config.js';
 import { SPEAKERS, chapterOf } from './missions.js';
 import { drawPortrait } from './portraits.js';
 import { weaponHud } from './weapons.js';
 import { crewHud } from './crew.js';
 import { unitList } from './wanted.js';
-import { radioLabel } from './radio.js';
+import { radioNow } from './radio.js';
 
 const $ = (id) => document.getElementById(id);
 let mapCtx = null;
@@ -82,15 +82,16 @@ export function updateHud(game) {
     sight.textContent = game.wanted.seen ? '● IN SIGHT' : '○ HIDDEN';
     sight.className = game.wanted.seen ? 'seen' : 'hidden';
   } else sight.style.display = 'none';
-  // Police response (mid-left): named units with distance + status, and a unit count
-  // in the title so the heat reads at a glance.
+  // Azura PD dispatch (mid-left): named units with role + live distance, and a
+  // unit count in the title so the heat reads at a glance. AIR ONE joins the
+  // panel with its spotlight role while the helicopter is up.
   const pol = $('police');
   if (game.wanted.stars > 0) {
     pol.style.display = 'block';
-    const units = unitList(game.wanted);
-    $('police').querySelector('.ptitle').textContent = `AZURA PD RESPONSE · ${units.length} UNIT${units.length === 1 ? '' : 'S'}`;
+    const units = unitList(game.wanted, game.heli, p.x, p.z);
+    $('police').querySelector('.ptitle').textContent = `AZURA PD DISPATCH · ${units.length} UNIT${units.length === 1 ? '' : 'S'}`;
     $('units').innerHTML = units.map((u) =>
-      `<div class="unit"><b>${u.name}</b> · ${u.dist}m · ${u.status}</div>`).join('') ||
+      `<div class="unit"><b>${u.name}</b> · <span class="role">${u.status}</span> · ${u.dist}m</div>`).join('') ||
       '<div class="unit">No units in range</div>';
   } else pol.style.display = 'none';
   // Roadblock warning banner (top-centre): visible while a roadblock stands ahead.
@@ -108,15 +109,16 @@ export function updateHud(game) {
   const rep = game.repInfo();
   $('rep').textContent = `RANK ${rep.level} · ${rep.title} ${rep.maxed ? 'MAX' : `${rep.cur}/${rep.need} RP`}`;
   $('repbar').firstElementChild.style.width = rep.maxed ? '100%' : `${Math.round((rep.cur / rep.need) * 100)}%`;
-  // District under minimap.
-  $('district').textContent = districtAt(p.x, p.z);
-  // Dialogue (bottom-centre) with portrait.
+  // District + street under minimap: the player always knows the exact road.
+  $('district').textContent = `${districtAt(p.x, p.z)} · ${p.street || streetAt(p.x, p.z)}`;
+  // Dialogue (bottom-centre) with portrait: name · role, so every voice is
+  // introduced, not just named.
   const dlg = $('dialog');
   if (ms.dialogT > 0 && ms.dialog) {
     dlg.style.display = 'block';
     const sp = SPEAKERS[ms.dialog.who] || SPEAKERS.MARA;
     drawPortrait($('portrait'), ms.dialog.who);
-    dlg.querySelector('.dname').textContent = sp.name;
+    dlg.querySelector('.dname').textContent = sp.role ? `${sp.name} · ${sp.role}` : sp.name;
     dlg.querySelector('.dtext').textContent = ms.dialog.text;
   } else dlg.style.display = 'none';
   // Driving cluster (bottom-right): speed, car, condition bar + label, radio, gear.
@@ -132,7 +134,7 @@ export function updateHud(game) {
     const cl = $('condlabel');
     cl.style.display = 'block';
     cl.textContent = `CONDITION ${Math.round(Math.max(0, p.inCar.condition))}% · ${condLabel(p.inCar.condition)}`;
-    $('radio').textContent = `♪ ${radioLabel(game.radio)}`;
+    $('radio').textContent = `♪ NOW PLAYING — ${radioNow(game.radio).station} · ${radioNow(game.radio).song}`;
     $('gear').textContent = `GEAR ${p.inCar.speed > 0.5 ? 'D' : p.inCar.speed < -0.5 ? 'R' : 'N'} · ${game.radio.station + 1}/4 · press R`;
   } else {
     sp.style.display = 'none';
@@ -142,10 +144,10 @@ export function updateHud(game) {
     $('radio').textContent = '';
     $('gear').textContent = '';
   }
-  // Crew abilities (mid-right): three cards, key + name + who + effect + cooldown.
+  // Crew abilities (mid-right): three cards, key + name + who · role + effect + cooldown.
   const crewEl = $('crew');
   crewEl.innerHTML = `<div class="ctitle">CREW ABILITIES</div>` + crewHud(game).map((c) =>
-    `<div class="crewcard ${c.ready ? 'ready' : 'cooling'}"><b>[${c.key}] ${c.name}</b> · ${c.who}<br><span class="cdesc">${c.desc}</span><br><span class="ccd">${c.ready ? 'READY' : `READY IN ${c.cd}s`}</span></div>`).join('');
+    `<div class="crewcard ${c.ready ? 'ready' : 'cooling'}"><b>[${c.key}] ${c.name}</b> · ${c.who}${c.role ? ` — ${c.role}` : ''}<br><span class="cdesc">${c.desc}</span><br><span class="ccd">${c.ready ? 'READY' : `READY IN ${c.cd}s`}</span></div>`).join('');
   $('crosshair').style.display = game.armed ? 'block' : 'none';
   drawMinimap(game);
 }

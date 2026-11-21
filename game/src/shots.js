@@ -11,8 +11,23 @@ function simulate(game, seconds) {
 }
 
 // Put the player in a car and get it moving along a road.
-function driveCar(game, x, z, angle, speed) {
-  const car = game.nearestCar(x, z, 60, true); // prefer a non-taxi so the hero car reads as a car, not a cab
+// `exclude` lists cars the staging will reposition itself as background traffic:
+// the hero car must never be one of those, or the staging would teleport the
+// player's car to the background car's spot (that is what broke the mission
+// shot in round 6: the nearest car to (60,66) was traffic[3], which the
+// staging then moved to (110,62) as the westbound car — the shot framed the
+// hotel wall with the mission already complete). The pick itself is the
+// nearest non-taxi car within 60 m that is not excluded and not a mission
+// target car.
+function driveCar(game, x, z, angle, speed, exclude = []) {
+  let car = null, bd = 60;
+  for (const c of [...game.traffic, ...game.parked]) {
+    if (c.mode === 'target') continue;
+    if (c.taxi) continue; // prefer a non-taxi so the hero car reads as a car, not a cab
+    if (exclude.includes(c)) continue;
+    const d = Math.hypot(c.x - x, c.z - z);
+    if (d < bd) { bd = d; car = c; }
+  }
   game.teleportPlayer(x, z, angle);
   if (car) {
     // Put the car itself at the staging point too: the nearest car could be on a
@@ -56,9 +71,11 @@ export function stageShot(name, game) {
     g.setHeli(true);
     g.startMission(11); // the finale: the panel reads MISSION 12/12 · THE AZURA CROWN
     g.missions.stage = 3; // escape stage, so the panel reads STAGE 4/4
-    g.missions.dialog = { who: 'MARA', text: 'Lose that helicopter before you come near my garage!' };
+    // The chase frame speaks in the dispatch voice: Sgt. Reyes calls the
+    // roadblock the player is about to meet, so the panel and the dialogue agree.
+    g.missions.dialog = { who: 'DISPATCH', text: 'Roadblock going up ahead on Coral Row. All units converge.' };
     g.missions.dialogT = 99;
-    const car = driveCar(g, 18, -48, 0, 24);
+    const car = driveCar(g, 18, -48, 0, 24, [g.traffic[2], g.traffic[3], g.traffic[4]]);
     if (car) car.name = 'Comet GT';
     g.spawnPoliceNear(3, 12);
     // Busy street: pedestrians on both sidewalks and traffic in both lanes,
@@ -108,7 +125,7 @@ export function stageShot(name, game) {
     g.missions.stage = 1; // delivery leg
     g.missions.dialog = { who: 'MARA', text: 'The hotel wants that package in 90 seconds. Don\'t get it wet!' };
     g.missions.dialogT = 99;
-    const car = driveCar(g, 60, 66, Math.PI / 2, 14);
+    const car = driveCar(g, 60, 66, Math.PI / 2, 14, [g.traffic[2], g.traffic[3]]);
     if (car) car.name = 'Coast Cruiser';
     // Busy street: pedestrians on the sidewalks and traffic in both lanes.
     const missionPeds = [[80, 58.5], [95, 73.5], [70, 73.5], [105, 58.5]];
@@ -133,7 +150,7 @@ export function stageShot(name, game) {
     g.radio.station = 3;
     const car = driveCar(g, -78, -70, Math.PI, 16);
     if (car) car.name = 'Palm Runner';
-    g.missions.dialog = { who: 'LENA', text: 'Sunset on the beach road. Even the cops look good in this light.' };
+    g.missions.dialog = { who: 'LENA', text: 'Sunset on the beach road. Sunset Boulevard could never look this good.' };
     g.missions.dialogT = 99;
     simulate(g, SIM_SECONDS);
     if (car) { car.speed = 18; car.condition = 100; } // re-accelerate so the speedo reads like a drive, not a stall; the sim's police pile-up would otherwise leave the photo car wrecked
